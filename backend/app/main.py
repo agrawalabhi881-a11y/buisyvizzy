@@ -9,6 +9,7 @@ from app.api.routes.procurement import router as procurement_router
 from app.api.routes.simulation import router as simulation_router
 from app.api.routes.forecasting import router as forecasting_router
 from app.api.routes.alerts import router as alerts_router
+from app.api.routes.contract_aliases import router as contract_aliases_router
 
 app = FastAPI(
     title="NEXUS — Supply Chain Digital Twin API",
@@ -25,7 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include all API routers with and without /api prefix for flexibility
+# Include all API routers with and without /api prefix for maximum client flexibility
 app.include_router(health_router)
 app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
@@ -35,6 +36,8 @@ app.include_router(procurement_router, prefix="/api")
 app.include_router(simulation_router, prefix="/api")
 app.include_router(forecasting_router, prefix="/api")
 app.include_router(alerts_router, prefix="/api")
+app.include_router(contract_aliases_router, prefix="/api")
+app.include_router(contract_aliases_router)
 
 
 @app.get("/", tags=["service"])
