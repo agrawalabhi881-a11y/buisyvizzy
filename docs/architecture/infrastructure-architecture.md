@@ -23,7 +23,7 @@ Named volumes `postgres_data` and `redis_data` preserve database files across co
 
 Run `docker compose up --build` from the repository root. The API is available at `http://localhost:8000` and `http://localhost:8000/health`; the frontend is at `http://localhost:3000`. Override published ports through `.env` when those ports are occupied. Stop the stack with `docker compose down`; persistent data remains in named volumes. `docker compose down -v` removes that data.
 
-Alembic is configured in `backend/alembic.ini` and reads `DATABASE_URL`. From the backend environment, use `alembic upgrade head` to apply migrations and `alembic downgrade -1` to reverse one revision. The SQLAlchemy metadata currently contains no domain tables.
+Alembic is configured in `backend/alembic.ini` and reads `DATABASE_URL`. From the backend environment, use `alembic upgrade head` to apply migrations and `alembic downgrade -1` to reverse one revision. Phase 2 adds the supply-chain schema; see [the data model](../database/erd.md).
 
 ## CI
 
