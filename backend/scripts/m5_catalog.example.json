@@ -1,0 +1,296 @@
+{
+  "stores": [
+    {
+      "store_id": "CA_1",
+      "state_id": "CA"
+    },
+    {
+      "store_id": "CA_2",
+      "state_id": "CA"
+    },
+    {
+      "store_id": "CA_3",
+      "state_id": "CA"
+    },
+    {
+      "store_id": "CA_4",
+      "state_id": "CA"
+    },
+    {
+      "store_id": "TX_1",
+      "state_id": "TX"
+    },
+    {
+      "store_id": "TX_2",
+      "state_id": "TX"
+    },
+    {
+      "store_id": "TX_3",
+      "state_id": "TX"
+    },
+    {
+      "store_id": "WI_1",
+      "state_id": "WI"
+    },
+    {
+      "store_id": "WI_2",
+      "state_id": "WI"
+    },
+    {
+      "store_id": "WI_3",
+      "state_id": "WI"
+    }
+  ],
+  "products": [
+    {
+      "item_id": "FOODS_1_003",
+      "dept_id": "FOODS_1",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_2_013",
+      "dept_id": "FOODS_2",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_3_014",
+      "dept_id": "FOODS_3",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "HOBBIES_1_010",
+      "dept_id": "HOBBIES_1",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOBBIES_2_009",
+      "dept_id": "HOBBIES_2",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOUSEHOLD_1_011",
+      "dept_id": "HOUSEHOLD_1",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "HOUSEHOLD_2_030",
+      "dept_id": "HOUSEHOLD_2",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "FOODS_1_006",
+      "dept_id": "FOODS_1",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_2_026",
+      "dept_id": "FOODS_2",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_3_020",
+      "dept_id": "FOODS_3",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "HOBBIES_1_022",
+      "dept_id": "HOBBIES_1",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOBBIES_2_036",
+      "dept_id": "HOBBIES_2",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOUSEHOLD_1_016",
+      "dept_id": "HOUSEHOLD_1",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "HOUSEHOLD_2_033",
+      "dept_id": "HOUSEHOLD_2",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "FOODS_1_018",
+      "dept_id": "FOODS_1",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_2_042",
+      "dept_id": "FOODS_2",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_3_080",
+      "dept_id": "FOODS_3",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "HOBBIES_1_023",
+      "dept_id": "HOBBIES_1",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOBBIES_2_120",
+      "dept_id": "HOBBIES_2",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOUSEHOLD_1_025",
+      "dept_id": "HOUSEHOLD_1",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "HOUSEHOLD_2_052",
+      "dept_id": "HOUSEHOLD_2",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "FOODS_1_019",
+      "dept_id": "FOODS_1",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_2_052",
+      "dept_id": "FOODS_2",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_3_090",
+      "dept_id": "FOODS_3",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "HOBBIES_1_028",
+      "dept_id": "HOBBIES_1",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOBBIES_2_002",
+      "dept_id": "HOBBIES_2",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOUSEHOLD_1_034",
+      "dept_id": "HOUSEHOLD_1",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "HOUSEHOLD_2_059",
+      "dept_id": "HOUSEHOLD_2",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "FOODS_1_020",
+      "dept_id": "FOODS_1",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_2_056",
+      "dept_id": "FOODS_2",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_3_109",
+      "dept_id": "FOODS_3",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "HOBBIES_1_032",
+      "dept_id": "HOBBIES_1",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOBBIES_2_046",
+      "dept_id": "HOBBIES_2",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOUSEHOLD_1_038",
+      "dept_id": "HOUSEHOLD_1",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "HOUSEHOLD_2_084",
+      "dept_id": "HOUSEHOLD_2",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "FOODS_1_024",
+      "dept_id": "FOODS_1",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_2_166",
+      "dept_id": "FOODS_2",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_3_115",
+      "dept_id": "FOODS_3",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "HOBBIES_1_038",
+      "dept_id": "HOBBIES_1",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOBBIES_2_115",
+      "dept_id": "HOBBIES_2",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOUSEHOLD_1_046",
+      "dept_id": "HOUSEHOLD_1",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "HOUSEHOLD_2_140",
+      "dept_id": "HOUSEHOLD_2",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "FOODS_1_032",
+      "dept_id": "FOODS_1",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_2_181",
+      "dept_id": "FOODS_2",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "FOODS_3_117",
+      "dept_id": "FOODS_3",
+      "cat_id": "FOODS"
+    },
+    {
+      "item_id": "HOBBIES_1_067",
+      "dept_id": "HOBBIES_1",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOBBIES_2_130",
+      "dept_id": "HOBBIES_2",
+      "cat_id": "HOBBIES"
+    },
+    {
+      "item_id": "HOUSEHOLD_1_048",
+      "dept_id": "HOUSEHOLD_1",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "HOUSEHOLD_2_142",
+      "dept_id": "HOUSEHOLD_2",
+      "cat_id": "HOUSEHOLD"
+    },
+    {
+      "item_id": "FOODS_1_041",
+      "dept_id": "FOODS_1",
+      "cat_id": "FOODS"
+    }
+  ]
+}

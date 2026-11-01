@@ -1,3 +1,4 @@
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -64,3 +65,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+
