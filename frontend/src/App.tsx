@@ -6,7 +6,8 @@ import SimulationControls from './features/simulation/components/SimulationContr
 import DisruptionPanel, { type ActiveDisruption } from './features/disruptions/components/DisruptionPanel'
 import NetworkMetrics, { type KPIMetricData } from './features/analytics/components/NetworkMetrics'
 import StrategyComparisonView from './features/simulation/components/StrategyComparisonView'
-import { TrendingUp, Warehouse, Store, Truck, Sparkles, AlertOctagon } from 'lucide-react'
+import FleetRoutingMap from './features/logistics/components/FleetRoutingMap'
+import { TrendingUp, Warehouse, Store, Truck, Sparkles, Navigation } from 'lucide-react'
 
 function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('digital-twin')
@@ -158,6 +159,10 @@ function App() {
         </div>
       )}
 
+      {/* Geographic Fleet Map View */}
+      {activeTab === 'fleet-map' && <FleetRoutingMap />}
+
+      {/* Strategy Comparison Lab */}
       {activeTab === 'strategy-lab' && <StrategyComparisonView />}
 
       {/* Persona View: Distributor */}
@@ -314,51 +319,42 @@ function App() {
         </div>
       )}
 
-      {/* Persona View: Truck Driver / Logistics */}
+      {/* Persona View: Truck Driver / Logistics with Full Map */}
       {activeTab === 'driver' && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-cyan-500/15 p-2 text-cyan-400">
-                <Truck size={22} />
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-cyan-500/15 p-2 text-cyan-400">
+                  <Truck size={22} />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white">Logistics Fleet Driver Console & Route Map</h2>
+                  <p className="text-xs text-slate-400">Clarke-Wright 2-Opt Optimization, Monte Carlo Delays, Dynamic Cluster Failover</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Logistics Fleet & VRP Routing</h2>
-                <p className="text-xs text-slate-400">Clarke-Wright 2-Opt Optimization, Monte Carlo Delays, Dynamic Cluster Failover</p>
-              </div>
-            </div>
-            <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">
-              Role: Truck Driver / Logistics
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400 mb-2">Fleet Status</h3>
-              <p className="text-xl font-bold font-mono text-cyan-400">10 Active Trucks</p>
-              <p className="text-xs text-slate-400 mt-1">Spatial K-Means Clustered</p>
+              <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">
+                Role: Truck Driver / Logistics
+              </span>
             </div>
 
-            <div className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400 mb-2">Breakdown Failover Engine</h3>
-              <div className="flex items-center gap-2 text-xs text-emerald-400">
-                <Truck size={14} />
-                <span>Automatic reroute to nearest idle truck in cluster</span>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800">
+                <span className="text-slate-400">Active Trucks in Transit:</span>
+                <p className="text-base font-bold text-cyan-400 font-mono mt-0.5">7 Trucks Moving</p>
               </div>
-              <p className="text-xs text-slate-400 mt-2">
-                Stochastic 1% breakdown chance in transit; delivery is seamlessly salvaged.
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400 mb-2">Logistics Economics</h3>
-              <div className="text-xs text-slate-400 space-y-1">
-                <p>Fuel Rate: $1.25 / km</p>
-                <p>Driver Daily Wage: $120.00 / day</p>
-                <p>Avg Route Length: 84.5 km</p>
+              <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800">
+                <span className="text-slate-400">Parked / Depot Reserve:</span>
+                <p className="text-base font-bold text-purple-400 font-mono mt-0.5">3 Trucks at Docks</p>
+              </div>
+              <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800">
+                <span className="text-slate-400">Dynamic Failover Mechanism:</span>
+                <p className="text-base font-bold text-emerald-400 font-mono mt-0.5">Automated Dispatch</p>
               </div>
             </div>
           </div>
+
+          <FleetRoutingMap />
         </div>
       )}
     </AppLayout>

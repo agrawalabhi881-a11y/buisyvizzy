@@ -1,6 +1,6 @@
 import {
   Globe,
-  Sliders,
+  Navigation,
   TrendingUp,
   Warehouse,
   Store,
@@ -12,6 +12,7 @@ import {
 
 export type ActiveTab =
   | 'digital-twin'
+  | 'fleet-map'
   | 'strategy-lab'
   | 'distributor'
   | 'warehouse'
@@ -36,16 +37,17 @@ export default function Sidebar({
     { id: 'DISTRIBUTOR', label: 'Distributor', icon: TrendingUp, defaultTab: 'distributor' as ActiveTab },
     { id: 'WAREHOUSE_MANAGER', label: 'Warehouse Mgr', icon: Warehouse, defaultTab: 'warehouse' as ActiveTab },
     { id: 'STORE_OWNER', label: 'Store Owner', icon: Store, defaultTab: 'store' as ActiveTab },
-    { id: 'TRUCK_DRIVER', label: 'Logistics Driver', icon: Truck, defaultTab: 'driver' as ActiveTab },
+    { id: 'TRUCK_DRIVER', label: 'Logistics Driver', icon: Truck, defaultTab: 'fleet-map' as ActiveTab },
   ]
 
   const views = [
     { id: 'digital-twin' as ActiveTab, label: 'Digital Twin Canvas', icon: Globe },
+    { id: 'fleet-map' as ActiveTab, label: 'Geographic Fleet Map', icon: Navigation },
     { id: 'strategy-lab' as ActiveTab, label: 'Strategy Lab (CRN)', icon: Sparkles },
     { id: 'distributor' as ActiveTab, label: 'Forecasts & MILP', icon: TrendingUp },
     { id: 'warehouse' as ActiveTab, label: 'Warehouse Storage', icon: Warehouse },
     { id: 'store' as ActiveTab, label: 'Store & Lost Sales', icon: Store },
-    { id: 'driver' as ActiveTab, label: 'VRP Fleet Routes', icon: Truck },
+    { id: 'driver' as ActiveTab, label: 'Driver Telemetry', icon: Truck },
   ]
 
   return (
