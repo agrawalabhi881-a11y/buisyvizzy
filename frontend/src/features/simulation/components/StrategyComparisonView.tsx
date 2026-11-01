@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'recharts'
 import { ShieldCheck, PlayCircle, BarChart2, CheckCircle2, TrendingUp, Sparkles } from 'lucide-react'
+import { apiClient } from '../../../api/client'
 
 interface MetricComparison {
   metric_name: string
@@ -64,22 +65,8 @@ export default function StrategyComparisonView() {
   const handleRunComparison = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/api/simulation/strategy-comparison', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenario_type: selectedScenario,
-          num_seeds: numSeeds,
-          duration_ticks: 30,
-        }),
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setReport(data)
-      } else {
-        // Fallback realistic presentation data if backend not currently reachable
-        simulateLocalReport(selectedScenario, numSeeds)
-      }
+      const data = await apiClient.fetchStrategyComparison(selectedScenario, numSeeds, 30)
+      setReport(data as ScenarioReport)
     } catch {
       simulateLocalReport(selectedScenario, numSeeds)
     } finally {

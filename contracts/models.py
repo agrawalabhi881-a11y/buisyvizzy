@@ -152,3 +152,59 @@ class KPISnapshotContract(BaseModel):
     stockout_frequency: float = 0.0
     active_disruptions_count: int = 0
     network_in_recovery: bool = False
+
+class AlertSeverity(str, Enum):
+    CRITICAL = "CRITICAL"
+    WARNING = "WARNING"
+    INFO = "INFO"
+
+
+class AlertStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    ACKNOWLEDGED = "ACKNOWLEDGED"
+    RESOLVED = "RESOLVED"
+
+
+class RecommendationStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    EXECUTED = "EXECUTED"
+
+
+class AlertContract(BaseModel):
+    id: str
+    tick: int
+    severity: AlertSeverity = AlertSeverity.WARNING
+    title: str
+    description: str
+    source_type: str = "SYSTEM"
+    source_id: str = "ALL"
+    status: AlertStatus = AlertStatus.ACTIVE
+    recommendation_id: Optional[str] = None
+    created_at: str = ""
+
+
+class RecommendationContract(BaseModel):
+    id: str
+    alert_id: Optional[str] = None
+    type: str
+    title: str
+    description: str
+    reasoning: str
+    trade_offs: str
+    projected_savings_usd: float = 0.0
+    projected_fill_rate_delta: float = 0.0
+    implementation_cost_usd: float = 0.0
+    status: RecommendationStatus = RecommendationStatus.PENDING
+    created_tick: int = 0
+
+
+class ActivityContract(BaseModel):
+    id: str
+    tick: int
+    timestamp: str
+    event_type: str
+    description: str
+    details: Dict = Field(default_factory=dict)
+

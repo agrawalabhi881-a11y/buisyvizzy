@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import AppLayout from './app/AppLayout'
 import { type ActiveTab } from './components/layout/Sidebar'
 import SupplyChainCanvas from './features/digital-twin/components/SupplyChainCanvas'
@@ -7,7 +7,26 @@ import DisruptionPanel, { type ActiveDisruption } from './features/disruptions/c
 import NetworkMetrics, { type KPIMetricData } from './features/analytics/components/NetworkMetrics'
 import StrategyComparisonView from './features/simulation/components/StrategyComparisonView'
 import FleetRoutingMap from './features/logistics/components/FleetRoutingMap'
-import { TrendingUp, Warehouse, Store, Truck, Sparkles, Navigation } from 'lucide-react'
+import DemandForecastingView from './features/forecasting/components/DemandForecastingView'
+import AlertsRecommendationDeck from './features/alerts/components/AlertsRecommendationDeck'
+import GuidedDemoWalkthrough, { type GuidedStage } from './features/narrative/GuidedDemoWalkthrough'
+import { apiClient, type Alert, type Recommendation, type KPISnapshot } from './api/client'
+import {
+  TrendingUp,
+  Warehouse,
+  Store,
+  Truck,
+  Sparkles,
+  Navigation,
+  ShieldCheck,
+  AlertTriangle,
+  RotateCcw,
+  CheckCircle2,
+  Layers,
+  Fuel,
+  Activity,
+  ArrowRight,
+} from 'lucide-react'
 
 function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('digital-twin')
@@ -16,12 +35,16 @@ function App() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1)
   const [optimizerEnabled, setOptimizerEnabled] = useState<boolean>(true)
+  const [backendConnected, setBackendConnected] = useState<boolean>(true)
   const [activeDisruptions, setActiveDisruptions] = useState<ActiveDisruption[]>([])
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([])
+  const [currentStageIndex, setCurrentStageIndex] = useState<number>(0)
 
   const [currentMetrics, setCurrentMetrics] = useState({
     fillRate: 0.985,
     totalCost: 14250.0,
-    stockoutFreq: 0.02,
+    stockoutFreq: 0.015,
     unmetUnits: 0.0,
     netProfit: 38400.0,
   })
@@ -30,92 +53,254 @@ function App() {
     { tick: 0, fillRate: 0.99, totalCost: 1200, unmetUnits: 0, fulfilledUnits: 450, netProfit: 3500 },
   ])
 
-  // Simulation tick loop
+  // Initial authoritative sync with backend on mount
+  const syncStateFromBackend = useCallback(async () => {
+    try {
+      const state = await apiClient.getSimulationState()
+      setBackendConnected(true)
+      setCurrentTick(state.tick)
+      setOptimizerEnabled(state.optimizer_enabled)
+
+      if (state.metrics) {
+        setCurrentMetrics({
+          fillRate: state.metrics.fill_rate,
+          totalCost: state.metrics.total_procurement_cost + state.metrics.total_holding_cost + state.metrics.total_transport_cost,
+          stockoutFreq: state.metrics.stockout_frequency,
+          unmetUnits: state.metrics.total_unmet_units,
+          netProfit: state.metrics.net_profit,
+        })
+      }
+
+      if (state.kpi_history && state.kpi_history.length > 0) {
+        setKpiHistory(
+          state.kpi_history.map((s) => ({
+            tick: s.tick,
+            fillRate: s.fill_rate,
+            totalCost: s.total_procurement_cost + s.total_holding_cost + s.total_transport_cost,
+            unmetUnits: s.total_unmet_units,
+            fulfilledUnits: s.total_fulfilled_units,
+            netProfit: s.net_profit,
+          }))
+        )
+      }
+
+      const [alertsData, recsData] = await Promise.all([
+        apiClient.fetchAlerts(),
+        apiClient.fetchRecommendations(),
+      ])
+      setAlerts(alertsData)
+      setRecommendations(recsData)
+    } catch {
+      setBackendConnected(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    syncStateFromBackend()
+  }, [syncStateFromBackend])
+
+  // Authoritative simulation tick playback loop
   useEffect(() => {
     if (!isPlaying) return
 
-    const intervalMs = Math.max(300, 1500 / speed)
-    const timer = setInterval(() => {
-      setCurrentTick((prev) => {
-        const nextTick = prev + 1
+    const intervalMs = Math.max(400, 1500 / speed)
+    const timer = setInterval(async () => {
+      try {
+        const result = await apiClient.stepTick(optimizerEnabled)
+        setBackendConnected(true)
+        const snap = result.snapshot
+        setCurrentTick(result.tick)
 
-        // Age active disruptions
-        setActiveDisruptions((currentDisruptions) =>
-          currentDisruptions
-            .map((d) => ({ ...d, remainingTicks: d.remainingTicks - 1 }))
-            .filter((d) => d.remainingTicks > 0)
-        )
-
-        // Compute simulated KPI dynamics
-        const hasDisruptions = activeDisruptions.length > 0
-        const fill = hasDisruptions
-          ? optimizerEnabled
-            ? Math.max(0.88, 0.98 - Math.random() * 0.06)
-            : Math.max(0.62, 0.98 - Math.random() * 0.25)
-          : 0.98 + Math.random() * 0.02
-
-        const unmet = hasDisruptions ? (optimizerEnabled ? Math.floor(Math.random() * 20) : Math.floor(Math.random() * 120) + 30) : 0
-        const costAdd = 850 + (optimizerEnabled ? 150 : 0) + unmet * 25
-
-        setCurrentMetrics((m) => ({
-          fillRate: parseFloat(fill.toFixed(3)),
-          totalCost: Math.round(m.totalCost + costAdd),
-          stockoutFreq: unmet > 0 ? 0.15 : 0.01,
-          unmetUnits: unmet,
-          netProfit: Math.round(m.netProfit + 2100 - costAdd),
-        }))
-
-        setKpiHistory((h) => {
-          const updated = [
-            ...h,
-            {
-              tick: nextTick,
-              fillRate: parseFloat(fill.toFixed(3)),
-              totalCost: Math.round(costAdd),
-              unmetUnits: unmet,
-              fulfilledUnits: Math.floor(400 + Math.random() * 100),
-              netProfit: 1500,
-            },
-          ]
-          return updated.slice(-25) // Keep last 25 ticks
+        const cost = snap.total_procurement_cost + snap.total_holding_cost + snap.total_transport_cost
+        setCurrentMetrics({
+          fillRate: snap.fill_rate,
+          totalCost: cost,
+          stockoutFreq: snap.stockout_frequency,
+          unmetUnits: snap.total_unmet_units,
+          netProfit: snap.net_profit,
         })
 
-        return nextTick
-      })
+        setKpiHistory((prev) => [
+          ...prev.slice(-24),
+          {
+            tick: result.tick,
+            fillRate: snap.fill_rate,
+            totalCost: cost,
+            unmetUnits: snap.total_unmet_units,
+            fulfilledUnits: snap.total_fulfilled_units,
+            netProfit: snap.net_profit,
+          },
+        ])
+
+        // Refresh alerts and recommendations
+        const [alertsData, recsData] = await Promise.all([
+          apiClient.fetchAlerts(),
+          apiClient.fetchRecommendations(),
+        ])
+        setAlerts(alertsData)
+        setRecommendations(recsData)
+      } catch {
+        // Fallback local step if backend temporarily disconnected
+        setCurrentTick((t) => t + 1)
+      }
     }, intervalMs)
 
     return () => clearInterval(timer)
-  }, [isPlaying, speed, activeDisruptions, optimizerEnabled])
+  }, [isPlaying, speed, optimizerEnabled])
 
-  const handleInjectDisruption = (type: string, severity: number, duration: number) => {
-    const newDisr: ActiveDisruption = {
-      id: `DISR_${Date.now()}`,
-      type,
-      target: type === 'SUPPLIER_FAILURE' ? 'MFR_01' : type === 'DEMAND_SPIKE' ? 'STORE_01' : 'ALL',
-      severity,
-      remainingTicks: duration,
+  // Single step tick
+  const handleStepTick = async () => {
+    try {
+      const result = await apiClient.stepTick(optimizerEnabled)
+      setBackendConnected(true)
+      const snap = result.snapshot
+      setCurrentTick(result.tick)
+
+      const cost = snap.total_procurement_cost + snap.total_holding_cost + snap.total_transport_cost
+      setCurrentMetrics({
+        fillRate: snap.fill_rate,
+        totalCost: cost,
+        stockoutFreq: snap.stockout_frequency,
+        unmetUnits: snap.total_unmet_units,
+        netProfit: snap.net_profit,
+      })
+
+      setKpiHistory((prev) => [
+        ...prev.slice(-24),
+        {
+          tick: result.tick,
+          fillRate: snap.fill_rate,
+          totalCost: cost,
+          unmetUnits: snap.total_unmet_units,
+          fulfilledUnits: snap.total_fulfilled_units,
+          netProfit: snap.net_profit,
+        },
+      ])
+
+      const [alertsData, recsData] = await Promise.all([
+        apiClient.fetchAlerts(),
+        apiClient.fetchRecommendations(),
+      ])
+      setAlerts(alertsData)
+      setRecommendations(recsData)
+    } catch {
+      setCurrentTick((t) => t + 1)
     }
-    setActiveDisruptions((prev) => [...prev, newDisr])
   }
 
-  const handleStepTick = () => {
-    setCurrentTick((t) => t + 1)
-  }
-
-  const handleReset = () => {
+  // Reset simulation to Tick 0
+  const handleReset = async () => {
     setIsPlaying(false)
-    setCurrentTick(0)
-    setActiveDisruptions([])
-    setCurrentMetrics({
-      fillRate: 0.99,
-      totalCost: 12000,
-      stockoutFreq: 0.01,
-      unmetUnits: 0,
-      netProfit: 42000,
-    })
-    setKpiHistory([
-      { tick: 0, fillRate: 0.99, totalCost: 1200, unmetUnits: 0, fulfilledUnits: 450, netProfit: 3500 },
-    ])
+    try {
+      await apiClient.resetSimulation(42, optimizerEnabled)
+      setBackendConnected(true)
+      setCurrentTick(0)
+      setActiveDisruptions([])
+      await syncStateFromBackend()
+    } catch {
+      setCurrentTick(0)
+      setActiveDisruptions([])
+    }
+  }
+
+  // Inject Disruption Shock
+  const handleInjectDisruption = async (type: string, severity: number, duration: number) => {
+    const target = type === 'SUPPLIER_FAILURE' ? 'MFR_01' : type === 'DEMAND_SPIKE' ? 'STORE_01' : 'ALL'
+    try {
+      const res = await apiClient.injectDisruption(type, target, severity, duration, `Injected ${type}`)
+      setBackendConnected(true)
+      setActiveDisruptions((prev) => [
+        ...prev,
+        {
+          id: `DISR_${Date.now()}`,
+          type,
+          target,
+          severity,
+          remainingTicks: duration,
+        },
+      ])
+      setAlerts((prev) => [res.alert, ...prev])
+      setRecommendations((prev) => [res.recommendation, ...prev])
+    } catch {
+      setActiveDisruptions((prev) => [
+        ...prev,
+        { id: `DISR_${Date.now()}`, type, target, severity, remainingTicks: duration },
+      ])
+    }
+  }
+
+  // Recommendation Decision Lifecycle
+  const handleApproveRecommendation = async (recId: string) => {
+    try {
+      await apiClient.approveRecommendation(recId)
+      await syncStateFromBackend()
+    } catch (err) {
+      console.error('Failed to approve recommendation:', err)
+    }
+  }
+
+  const handleRejectRecommendation = async (recId: string) => {
+    try {
+      await apiClient.rejectRecommendation(recId)
+      await syncStateFromBackend()
+    } catch (err) {
+      console.error('Failed to reject recommendation:', err)
+    }
+  }
+
+  const handleAcknowledgeAlert = async (alertId: string) => {
+    try {
+      const updated = await apiClient.acknowledgeAlert(alertId)
+      setAlerts((prev) => prev.map((a) => (a.id === alertId ? updated : a)))
+    } catch (err) {
+      console.error('Failed to acknowledge alert:', err)
+    }
+  }
+
+  const handleResolveAlert = async (alertId: string) => {
+    try {
+      const updated = await apiClient.resolveAlert(alertId)
+      setAlerts((prev) => prev.map((a) => (a.id === alertId ? updated : a)))
+    } catch (err) {
+      console.error('Failed to resolve alert:', err)
+    }
+  }
+
+  // Execute Guided Stage Actions for Demo Walkthrough
+  const handleExecuteStageAction = async (stage: GuidedStage) => {
+    if (stage.id === 'stage-a') {
+      setActiveTab('digital-twin')
+    } else if (stage.id === 'stage-b') {
+      setActiveTab('distributor')
+    } else if (stage.id === 'stage-c') {
+      setActiveTab('fleet-map')
+      try {
+        const res = await apiClient.triggerTruckBreakdown('TRUCK_03')
+        setAlerts((prev) => [res.alert, ...prev])
+        setRecommendations((prev) => [res.recommendation, ...prev])
+      } catch (err) {
+        console.error('Breakdown simulation failed:', err)
+      }
+    } else if (stage.id === 'stage-d') {
+      setActiveTab('digital-twin')
+      await handleStepTick()
+    } else if (stage.id === 'stage-e') {
+      setActiveTab('digital-twin')
+    } else if (stage.id === 'stage-f') {
+      setActiveTab('fleet-map')
+      const pending = recommendations.find((r) => r.type === 'TRUCK_FAILOVER' && r.status === 'PENDING')
+      if (pending) {
+        await handleApproveRecommendation(pending.id)
+      } else {
+        await apiClient.dispatchRescue('TRUCK_03', 'TRUCK_04').catch(() => {})
+      }
+    } else if (stage.id === 'stage-g') {
+      setActiveTab('strategy-lab')
+    } else if (stage.id === 'stage-h') {
+      await handleReset()
+      setActiveTab('digital-twin')
+      setCurrentStageIndex(0)
+    }
   }
 
   return (
@@ -124,10 +309,37 @@ function App() {
       activeRole={activeRole}
       currentTick={currentTick}
       optimizerEnabled={optimizerEnabled}
+      fillRate={currentMetrics.fillRate}
+      activeDisruptionsCount={activeDisruptions.length}
+      activeAlertsCount={alerts.filter((a) => a.status === 'ACTIVE').length}
+      backendConnected={backendConnected}
       onSelectTab={setActiveTab}
       onSelectRole={setActiveRole}
+      onSelectScenario={(scId) => {
+        if (scId === 'TRUCK_BREAKDOWN_FAILOVER') {
+          setActiveTab('fleet-map')
+          apiClient.triggerTruckBreakdown('TRUCK_03').catch(() => {})
+        } else if (scId === 'COMPOUND_BLACK_SWAN') {
+          handleInjectDisruption('COMPOUND_BLACK_SWAN', 3.0, 12)
+        } else if (scId === 'SEVERE_SUPPLIER_FAILURE') {
+          handleInjectDisruption('SUPPLIER_FAILURE', 3.0, 6)
+        } else if (scId === 'REGIONAL_DEMAND_SPIKE') {
+          handleInjectDisruption('DEMAND_SPIKE', 2.5, 5)
+        } else {
+          setActiveTab('strategy-lab')
+        }
+      }}
     >
-      {/* Universal Simulation Controls Bar */}
+      {/* 1. Interactive Guided Demo Walkthrough (Stage A -> H) */}
+      <GuidedDemoWalkthrough
+        currentStageIndex={currentStageIndex}
+        onSelectStage={setCurrentStageIndex}
+        onExecuteStageAction={handleExecuteStageAction}
+        activeTab={activeTab}
+        onSwitchTab={setActiveTab}
+      />
+
+      {/* 2. Universal Simulation Controls Bar */}
       <SimulationControls
         currentTick={currentTick}
         isPlaying={isPlaying}
@@ -140,9 +352,21 @@ function App() {
         onToggleOptimizer={() => setOptimizerEnabled((o) => !o)}
       />
 
-      {/* Main View Switching */}
+      {/* 3. Main View Switching */}
+      {/* View: Command Deck & Digital Twin Overview */}
       {activeTab === 'digital-twin' && (
         <div className="space-y-6">
+          {/* Autonomous AI Recommendations Spotlight & Alerts Feed */}
+          <AlertsRecommendationDeck
+            alerts={alerts}
+            recommendations={recommendations}
+            onApproveRecommendation={handleApproveRecommendation}
+            onRejectRecommendation={handleRejectRecommendation}
+            onAcknowledgeAlert={handleAcknowledgeAlert}
+            onResolveAlert={handleResolveAlert}
+          />
+
+          {/* Admin Disruption Injection Controls */}
           {activeRole === 'ADMIN' && (
             <DisruptionPanel
               activeDisruptions={activeDisruptions}
@@ -150,124 +374,75 @@ function App() {
             />
           )}
 
+          {/* Network Graph Visualizer */}
           <SupplyChainCanvas />
 
-          <NetworkMetrics
-            currentMetrics={currentMetrics}
-            history={kpiHistory}
-          />
+          {/* Performance KPIs & Trajectory Chart */}
+          <NetworkMetrics currentMetrics={currentMetrics} history={kpiHistory} />
         </div>
       )}
 
-      {/* Geographic Fleet Map View */}
+      {/* View: Geographic Fleet Routing & Dynamic Rescue Map */}
       {activeTab === 'fleet-map' && <FleetRoutingMap />}
 
-      {/* Strategy Comparison Lab */}
+      {/* View: Strategy Lab (Paired Monte Carlo with CRN) */}
       {activeTab === 'strategy-lab' && <StrategyComparisonView />}
 
-      {/* Persona View: Distributor */}
+      {/* View / Persona: Distributor (Probabilistic Forecasting & MILP) */}
       {activeTab === 'distributor' && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-purple-500/15 p-2 text-purple-400">
-                <TrendingUp size={22} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Distributor Inventory & MILP Rebalancing Deck</h2>
-                <p className="text-xs text-slate-400">LightGBM Quantile Forecasts (P10, P50, P90) & Lateral Transshipments</p>
-              </div>
-            </div>
-            <span className="rounded-full bg-purple-500/20 px-3 py-1 text-xs font-semibold text-purple-300">
-              Role: Distributor
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400 mb-2">Quantile Forecast (7-Day Horizon)</h3>
-              <p className="text-sm font-semibold text-white">PROD_001 @ STORE_01</p>
-              <div className="mt-3 space-y-2 text-xs">
-                <div className="flex justify-between text-slate-400">
-                  <span>P10 (Pessimistic Demand):</span>
-                  <span className="font-mono text-cyan-400">8.2 units/day</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>P50 (Median Forecast):</span>
-                  <span className="font-mono text-white font-bold">14.6 units/day</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>P90 (Safety Buffer Target):</span>
-                  <span className="font-mono text-purple-400 font-bold">22.4 units/day</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400 mb-2">Automated Rebalancing Solver</h3>
-              <p className="text-sm font-semibold text-white">OR-Tools MILP Solver</p>
-              <p className="text-xs text-slate-400 mt-1">
-                Proactively evaluates surplus vs. deficit warehouses to balance capacity before stockouts occur.
-              </p>
-              <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
-                <Sparkles size={14} />
-                <span>Optimal transfers computed each tick</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400 mb-2">Upstream Procurement</h3>
-              <p className="text-sm font-semibold text-white">(s, S) Reorder Policy</p>
-              <p className="text-xs text-slate-400 mt-1">
-                Monitors pipeline inventory against physical warehouse ceilings (10,000 units max).
-              </p>
-              <div className="mt-3 text-xs font-mono text-slate-300">
-                Pipeline Inbound: <span className="text-cyan-400 font-bold">1,800 units</span>
-              </div>
-            </div>
-          </div>
+        <div className="space-y-6">
+          <DemandForecastingView currentTick={currentTick} />
         </div>
       )}
 
-      {/* Persona View: Warehouse Manager */}
+      {/* View / Persona: Warehouse Manager */}
       {activeTab === 'warehouse' && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="rounded-2xl border border-white/[0.08] bg-slate-950/80 p-6 shadow-xl backdrop-blur-xl space-y-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-purple-500/15 p-2 text-purple-400">
                 <Warehouse size={22} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Warehouse Operations & Storage Capacity</h2>
-                <p className="text-xs text-slate-400">Strict Capacity Triggers, Lognormal Pick-Pack, and Escalation Engine</p>
+                <h2 className="text-base font-bold text-white tracking-tight">
+                  Regional Warehouse Operations & Storage Capacity
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Capacity Ceilings, Lognormal Pick-Pack Queues, and Automatic Shortage Escalation
+                </p>
               </div>
             </div>
-            <span className="rounded-full bg-purple-500/20 px-3 py-1 text-xs font-semibold text-purple-300">
+            <span className="rounded-full bg-purple-500/20 border border-purple-500/40 px-3 py-1 text-xs font-mono font-semibold text-purple-300">
               Role: Warehouse Manager
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {['WH_NORTH (Cluster 0)', 'WH_CENTRAL (Cluster 1)', 'WH_SOUTH (Cluster 2)'].map((wh, idx) => {
-              const util = idx === 0 ? 74 : idx === 1 ? 88 : 56
+            {[
+              { id: 'WH_01', name: 'Northeast Primary Hub (NYC)', cap: 40000, current: 31200, cluster: 0, dockTrucks: 1 },
+              { id: 'WH_02', name: 'Midwest Logistics Hub (CHI)', cap: 45000, current: 38400, cluster: 1, dockTrucks: 1 },
+              { id: 'WH_03', name: 'Southeast Regional Hub (ATL)', cap: 35000, current: 24900, cluster: 2, dockTrucks: 1 },
+            ].map((wh) => {
+              const util = (wh.current / wh.cap) * 100
               return (
-                <div key={wh} className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-                  <h3 className="text-sm font-bold text-white mb-1">{wh}</h3>
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs text-slate-400 mb-1">
-                      <span>Capacity Utilization</span>
-                      <span className="font-semibold text-purple-400">{util}%</span>
+                <div key={wh.id} className="rounded-xl border border-white/[0.06] bg-slate-900/60 p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono text-xs font-bold text-cyan-400">{wh.id}</span>
+                    <span className="text-[10px] font-mono text-slate-400">Cluster {wh.cluster}</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-white">{wh.name}</h4>
+                  <div>
+                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                      <span>Capacity Utilization:</span>
+                      <span className="font-mono font-bold text-white">{util.toFixed(1)}%</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-800">
-                      <div
-                        className="h-full rounded-full bg-purple-500"
-                        style={{ width: `${util}%` }}
-                      />
+                    <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                      <div className="h-full bg-purple-500 rounded-full" style={{ width: `${util}%` }} />
                     </div>
                   </div>
-                  <div className="mt-3 text-xs text-slate-400 space-y-1">
-                    <p>Current: {(util * 100).toLocaleString()} / 10,000 units</p>
-                    <p>Processing Lead Time: ~0.8 days</p>
+                  <div className="pt-2 border-t border-white/[0.04] flex justify-between text-xs text-slate-400 font-mono">
+                    <span>Stock: {wh.current.toLocaleString()} u</span>
+                    <span>Dock: {wh.dockTrucks} Idle Truck</span>
                   </div>
                 </div>
               )
@@ -276,85 +451,124 @@ function App() {
         </div>
       )}
 
-      {/* Persona View: Store Owner */}
+      {/* View / Persona: Store Owner */}
       {activeTab === 'store' && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="rounded-2xl border border-white/[0.08] bg-slate-950/80 p-6 shadow-xl backdrop-blur-xl space-y-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-emerald-500/15 p-2 text-emerald-400">
+              <div className="rounded-xl bg-cyan-500/15 p-2 text-cyan-400">
                 <Store size={22} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Store Owner Demand & Lost Sales Ledger</h2>
-                <p className="text-xs text-slate-400">Poisson Customer Influx, Shipment Tracking, and Lost Sales Logging</p>
+                <h2 className="text-base font-bold text-white tracking-tight">
+                  Retail Store Operations & Lost Sales Penalty Tracker
+                </h2>
+                <p className="text-xs text-slate-400">
+                  On-Shelf Availability, Order Fulfillment Status, and $25.00/unit Lost Sales Penalty
+                </p>
               </div>
             </div>
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300">
+            <span className="rounded-full bg-cyan-500/20 border border-cyan-500/40 px-3 py-1 text-xs font-mono font-semibold text-cyan-300">
               Role: Store Owner
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400 mb-2">Unmet Demand Penalty Rule</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                When warehouse stock is exhausted, orders are partially fulfilled and the shortfall is recorded in the UnmetDemand ledger. Lost sales incur a strict penalty of <strong className="text-rose-400">$25.00/unit</strong>, directly diminishing net operating profit.
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-mono">
+            <div className="rounded-xl border border-white/[0.06] bg-slate-900/60 p-4">
+              <span className="text-slate-400 uppercase text-[10px]">Monitored Store Outlets</span>
+              <p className="mt-1 text-2xl font-bold text-white">20 Stores</p>
+              <span className="text-slate-500">NYC (7), CHI (7), ATL (6)</span>
             </div>
 
-            <div className="rounded-xl bg-slate-950/60 p-4 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400 mb-2">Active Shipments Pipeline</h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between items-center bg-slate-900 p-2 rounded">
-                  <span className="text-slate-300">SHIP_000104 (50 units)</span>
-                  <span className="text-cyan-400 font-semibold">Arriving in 1 day</span>
-                </div>
-                <div className="flex justify-between items-center bg-slate-900 p-2 rounded">
-                  <span className="text-slate-300">SHIP_000112 (120 units)</span>
-                  <span className="text-emerald-400 font-semibold">Delivered</span>
-                </div>
-              </div>
+            <div className="rounded-xl border border-white/[0.06] bg-slate-900/60 p-4">
+              <span className="text-slate-400 uppercase text-[10px]">Total Unmet Demand</span>
+              <p className="mt-1 text-2xl font-bold text-rose-400">{currentMetrics.unmetUnits} units</p>
+              <span className="text-slate-500">Unfulfilled customer demand</span>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.06] bg-slate-900/60 p-4">
+              <span className="text-slate-400 uppercase text-[10px]">Lost Sales Penalty</span>
+              <p className="mt-1 text-2xl font-bold text-rose-400">
+                ${(currentMetrics.unmetUnits * 25).toLocaleString()}
+              </p>
+              <span className="text-slate-500">Contractual penalty ($25/unit)</span>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.06] bg-slate-900/60 p-4">
+              <span className="text-slate-400 uppercase text-[10px]">Replenishment Lead Time</span>
+              <p className="mt-1 text-2xl font-bold text-emerald-400">1.8 Ticks</p>
+              <span className="text-slate-500">Warehouse pick + VRP transit</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Persona View: Truck Driver / Logistics with Full Map */}
+      {/* View / Persona: Logistics Driver */}
       {activeTab === 'driver' && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-cyan-500/15 p-2 text-cyan-400">
-                  <Truck size={22} />
+        <div className="rounded-2xl border border-white/[0.08] bg-slate-950/80 p-6 shadow-xl backdrop-blur-xl space-y-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-amber-500/15 p-2 text-amber-400">
+                <Truck size={22} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white tracking-tight">
+                  Driver Mobile Telemetry & Emergency Reroute Cockpit
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Assigned Vehicle Manifest, In-Cab GPS Waypoints, and Dynamic Rescue Failover Alerts
+                </p>
+              </div>
+            </div>
+            <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1 text-xs font-mono font-semibold text-amber-300">
+              Driver: Elena Rostova (TRUCK_04)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-xl border border-white/[0.06] bg-slate-900/60 p-4 space-y-3">
+              <span className="text-[10px] font-mono uppercase text-slate-400">Assigned Logistics Vehicle</span>
+              <h4 className="text-base font-bold text-white">TRUCK_04 (Freightliner Cascadia)</h4>
+              <div className="space-y-1.5 text-xs font-mono text-slate-300">
+                <div className="flex justify-between">
+                  <span>Home Depot:</span>
+                  <span className="text-white">WH_01 (Northeast Hub)</span>
                 </div>
-                <div>
-                  <h2 className="text-base font-bold text-white">Logistics Fleet Driver Console & Route Map</h2>
-                  <p className="text-xs text-slate-400">Clarke-Wright 2-Opt Optimization, Monte Carlo Delays, Dynamic Cluster Failover</p>
+                <div className="flex justify-between">
+                  <span>Capacity:</span>
+                  <span className="text-white">500 units</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Speed:</span>
+                  <span className="text-cyan-400 font-bold">60 km/h</span>
                 </div>
               </div>
-              <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">
-                Role: Truck Driver / Logistics
-              </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-              <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800">
-                <span className="text-slate-400">Active Trucks in Transit:</span>
-                <p className="text-base font-bold text-cyan-400 font-mono mt-0.5">7 Trucks Moving</p>
+            <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 space-y-3">
+              <span className="text-[10px] font-mono uppercase text-amber-400 font-bold">
+                Emergency Failover Dispatch Active
+              </span>
+              <h4 className="text-sm font-bold text-white">Salvage Reroute Mission</h4>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Rerouted to salvage 340 units of perishable cargo stranded by TRUCK_03 breakdown at Hackensack corridor.
+              </p>
+              <div className="pt-2 border-t border-amber-500/20 flex justify-between text-xs font-mono">
+                <span className="text-slate-400">ETA to Site:</span>
+                <span className="text-amber-300 font-bold">18 mins (11.2 km)</span>
               </div>
-              <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800">
-                <span className="text-slate-400">Parked / Depot Reserve:</span>
-                <p className="text-base font-bold text-purple-400 font-mono mt-0.5">3 Trucks at Docks</p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800">
-                <span className="text-slate-400">Dynamic Failover Mechanism:</span>
-                <p className="text-base font-bold text-emerald-400 font-mono mt-0.5">Automated Dispatch</p>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.06] bg-slate-900/60 p-4 space-y-2">
+              <span className="text-[10px] font-mono uppercase text-slate-400">Active Waypoint Sequence</span>
+              <div className="space-y-1 text-xs font-mono text-slate-300">
+                <p className="text-cyan-400 font-bold">1. Current Location (WH_01 Dock)</p>
+                <p className="text-amber-400 font-bold">2. Breakdown Site (40.78°N, -74.12°W)</p>
+                <p className="text-slate-400">3. Target: Newark Store #04</p>
+                <p className="text-slate-500">4. Return Depot: WH_01</p>
               </div>
             </div>
           </div>
-
-          <FleetRoutingMap />
         </div>
       )}
     </AppLayout>

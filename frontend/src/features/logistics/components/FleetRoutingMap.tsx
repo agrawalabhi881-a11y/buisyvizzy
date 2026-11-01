@@ -25,6 +25,7 @@ import {
   Maximize2,
   Sparkles,
 } from 'lucide-react'
+import { apiClient } from '../../../api/client'
 
 // Custom Leaflet DivIcon helpers
 function createMarkerIcon(
@@ -300,6 +301,9 @@ export default function FleetRoutingMap() {
 
   // Breakdown & Dynamic Failover Simulation
   const handleTriggerBreakdown = (targetTruckId = 'TRUCK_03') => {
+    // Notify authoritative backend
+    apiClient.triggerTruckBreakdown(targetTruckId).catch(() => {})
+
     setFleet((prevFleet) => {
       const targetTruck = prevFleet.find((t) => t.id === targetTruckId)
       if (!targetTruck || targetTruck.status === 'BROKEN_DOWN') return prevFleet
