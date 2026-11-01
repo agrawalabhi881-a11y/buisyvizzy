@@ -31,26 +31,32 @@ from backend.app.sim.transit import TransitEngine
 from backend.app.sim.policy import ReplenishmentPolicy
 from backend.app.sim.disruptions import DisruptionEngine
 from backend.app.sim.kpi import KPIAccruer
+from backend.app.optimizers.rebalance import WarehouseRebalanceOptimizer
 
 
 class SupplyChainSimulationEngine:
     """The central digital twin simulation engine."""
 
-    def __init__(self, seed: int = 42):
+    def __init__(self, seed: int = 42, optimizer_enabled: bool = False):
         self.seed = seed
-        self.rng = np.random.default_rng(seed)
-        self.env = simpy.Environment()
+        self.optimizer_enabled = optimizer_enabled
+        # Independent RNG streams for CRN (Common Random Numbers) synchronization
+        self.demand_rng = np.random.default_rng(seed)
+        self.transit_rng = np.random.default_rng(seed + 10000)
 
         # Domain components
         self.network = NetworkState()
-        self.demand_gen = DemandGenerator(rng=self.rng, seed=seed)
-        self.transit_engine = TransitEngine(rng=self.rng, seed=seed)
+        self.demand_gen = DemandGenerator(rng=self.demand_rng, seed=seed)
+        self.transit_engine = TransitEngine(rng=self.transit_rng, seed=seed + 10000)
         self.disruption_engine = DisruptionEngine()
         self.kpi_accruer = KPIAccruer()
+        self.rebalance_optimizer = WarehouseRebalanceOptimizer()
 
+        self.env = simpy.Environment()
         self.current_tick: int = 0
         self._order_counter: int = 0
         self._shipment_counter: int = 0
+        self.rebalancing_history = []
 
     def initialize_network(
         self,
@@ -247,7 +253,72 @@ class SupplyChainSimulationEngine:
                     assigned_truck.total_fuel_cost += fuel_cost
                     tick_transport_fuel += fuel_cost
 
-        # Step 7: Distributor Replenishment Planning ((s, S) Upstream Policy)
+        # Step 7: Distributor Replenishment & Rebalancing Planning
+        if self.optimizer_enabled:
+            wh_nodes = {
+                w_id: {"capacity": n.max_capacity_units, "current_stock": n.total_current_stock}
+                for w_id, n in self.network.nodes.items()
+                if n.role == NodeRole.WAREHOUSE
+            }
+            inv_map = {
+                (w_id, p_id): {
+                    "stock": inv.current_stock,
+                    "safety": inv.safety_stock,
+                    "reorder": inv.reorder_point,
+                }
+                for w_id, n in self.network.nodes.items()
+                if n.role == NodeRole.WAREHOUSE
+                for p_id, inv in n.inventory.items()
+            }
+            prod_map = {
+                p_id: {"penalty": p.unmet_demand_penalty, "unit_cost": p.unit_cost}
+                for p_id, p in self.network.products.items()
+            }
+            dist_map = {
+                (w1, w2): self.network.get_distance(w1, w2)
+                for w1 in wh_nodes
+                for w2 in wh_nodes
+            }
+
+            rebal_plan = self.rebalance_optimizer.solve_rebalancing(
+                tick=t,
+                warehouses=wh_nodes,
+                inventories=inv_map,
+                products=prod_map,
+                distance_matrix=dist_map,
+            )
+            self.rebalancing_history.append(rebal_plan)
+
+            for trf in rebal_plan.transfers:
+                src_wh = self.network.nodes.get(trf.from_warehouse_id)
+                src_inv = src_wh.inventory.get(trf.product_id) if src_wh else None
+                if src_inv and src_inv.current_stock >= trf.quantity_units:
+                    src_inv.current_stock -= trf.quantity_units
+                    self._shipment_counter += 1
+                    trf_ship_id = f"TRF_SHIP_{self._shipment_counter:06d}"
+                    trf_shipment = ShipmentState(
+                        id=trf_ship_id,
+                        order_id=f"REBAL_{t}_{trf.from_warehouse_id}_{trf.to_warehouse_id}",
+                        origin_id=trf.from_warehouse_id,
+                        destination_id=trf.to_warehouse_id,
+                        truck_id=None,
+                        dispatch_tick=t,
+                        expected_arrival_tick=t + 1,  # Express transfer arrives next tick
+                        distance_km=trf.distance_km,
+                        cargo_units=trf.quantity_units,
+                        status=OrderStatus.IN_TRANSIT,
+                        lines=[
+                            OrderLineState(
+                                product_id=trf.product_id,
+                                ordered_units=trf.quantity_units,
+                                fulfilled_units=trf.quantity_units,
+                            )
+                        ],
+                    )
+                    self.network.active_shipments[trf_ship_id] = trf_shipment
+                    tick_transport_fuel += trf.estimated_freight_cost
+
+        # Upstream Manufacturing Replenishment ((s, S) Upstream Policy)
         upstream_orders = ReplenishmentPolicy.evaluate_upstream_sS_policy(self.network)
         supplier_delay = self.disruption_engine.get_supplier_delay_factor("MFR_01")
 

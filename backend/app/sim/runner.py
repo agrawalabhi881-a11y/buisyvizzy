@@ -43,9 +43,10 @@ class MonteCarloScenarioRunner:
         duration_ticks: int = 30,
         disruptions: Optional[List[DisruptionContract]] = None,
         custom_history: Optional[Dict[tuple, float]] = None,
+        optimizer_enabled: bool = False,
     ) -> List[KPISnapshotContract]:
         """Runs a single simulation run using a deterministic seed."""
-        engine = SupplyChainSimulationEngine(seed=seed)
+        engine = SupplyChainSimulationEngine(seed=seed, optimizer_enabled=optimizer_enabled)
 
         # Seed network topology
         products = generate_seed_products(50)
@@ -75,6 +76,7 @@ class MonteCarloScenarioRunner:
         num_seeds: int = 10,
         duration_ticks: int = 30,
         disruptions: Optional[List[DisruptionContract]] = None,
+        optimizer_enabled: bool = False,
     ) -> ScenarioComparisonReport:
         """Runs N reproducible Monte Carlo replications and accrues confidence intervals."""
         costs: List[float] = []
@@ -89,6 +91,7 @@ class MonteCarloScenarioRunner:
                 seed=seed,
                 duration_ticks=duration_ticks,
                 disruptions=disruptions,
+                optimizer_enabled=optimizer_enabled,
             )
             final_snap = snapshots[-1]
             costs.append(final_snap.total_operating_cost)

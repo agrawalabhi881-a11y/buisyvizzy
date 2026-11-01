@@ -33,6 +33,13 @@ from backend.tests.test_reproducibility import (
 from backend.tests.test_disruptions import (
     test_disruption_impact_and_recovery,
 )
+from backend.tests.test_optimizers import (
+    test_demand_weighted_clustering,
+    test_rebalancing_optimizer_moves_surplus_to_deficit,
+    test_vrp_clarke_wright_capacity_and_2opt,
+    test_dynamic_breakdown_failover_rerouting,
+    test_simulation_rebalancing_reduces_unmet_demand,
+)
 
 
 def run_all_tests():
@@ -56,6 +63,13 @@ def run_all_tests():
         ]),
         ("Disruption Engine & Recovery", [
             test_disruption_impact_and_recovery,
+        ]),
+        ("Phase 7 Optimization (Clustering, MILP, VRP, Failover)", [
+            test_demand_weighted_clustering,
+            test_rebalancing_optimizer_moves_surplus_to_deficit,
+            test_vrp_clarke_wright_capacity_and_2opt,
+            test_dynamic_breakdown_failover_rerouting,
+            test_simulation_rebalancing_reduces_unmet_demand,
         ]),
     ]
 

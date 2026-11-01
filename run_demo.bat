@@ -6,3 +6,4 @@ if not exist "%PYTHON_EXE%" (
 cd /d "%~dp0"
 "%PYTHON_EXE%" backend\demo_sim.py
 pause
+
