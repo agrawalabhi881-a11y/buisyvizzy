@@ -1,12 +1,44 @@
-﻿from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session
 
 from app.models import Distributor, Driver, Inventory, Product, Store, Truck, Warehouse
-from scripts.seed import run_seed
+from scripts.seed import seed_database
+
+M5_STORES = (
+    "CA_1",
+    "CA_2",
+    "CA_3",
+    "CA_4",
+    "TX_1",
+    "TX_2",
+    "TX_3",
+    "WI_1",
+    "WI_2",
+    "WI_3",
+)
 
 
-def test_seed_is_reproducible_and_does_not_invent_m5_ids(engine) -> None:
-    first = run_seed(engine, None)
-    second = run_seed(engine, None)
+def _catalog() -> dict[str, list[dict[str, str]]]:
+    return {
+        "stores": [
+            {"store_id": store_id, "state_id": store_id.split("_")[0]}
+            for store_id in M5_STORES
+        ],
+        "products": [
+            {
+                "item_id": f"FOODS_1_{index:03d}",
+                "dept_id": "FOODS_1",
+                "cat_id": "FOODS",
+            }
+            for index in range(1, 51)
+        ],
+    }
+
+
+def test_seed_is_reproducible_and_contains_only_m5_catalog(engine) -> None:
+    with Session(engine) as session, session.begin():
+        first = seed_database(session, _catalog())
+    with Session(engine) as session, session.begin():
+        second = seed_database(session, _catalog())
 
     assert first == second
     assert first["manufacturers"] == 1
@@ -16,42 +48,33 @@ def test_seed_is_reproducible_and_does_not_invent_m5_ids(engine) -> None:
     assert first["products"] == 50
     assert first["trucks"] == 10
     assert first["drivers"] == 10
+    assert first["inventory_records"] == 0
     assert first["stores_per_distributor_1"] == 5
     assert first["stores_per_distributor_2"] == 5
-    assert first["stores_per_warehouse_1"] == 3
-    assert first["stores_per_warehouse_2"] == 2
-    assert first["stores_per_warehouse_3"] == 5
     assert first["trucks_per_distributor_1"] == 5
     assert first["trucks_per_distributor_2"] == 5
     assert first["drivers_per_distributor_1"] == 5
     assert first["drivers_per_distributor_2"] == 5
+
     with Session(engine) as session:
         stores = session.query(Store).all()
-        assert all(store.m5_store_id is None for store in stores)
-        assert {store.synthetic_code for store in stores} == {
-            f"SYN-STORE-{index:03d}" for index in range(1, 11)
+        products = session.query(Product).all()
+        assert {store.m5_store_id for store in stores} == set(M5_STORES)
+        assert {store.name for store in stores} == {
+            f"Store {index}" for index in range(1, 11)
         }
+        assert all(store.synthetic_code is None for store in stores)
         assert all(
-            store.latitude is not None and store.longitude is not None
+            store.location_source == "approximate_state_centroid_not_store_address"
             for store in stores
         )
-        assert all(store.state_id in {"CA", "TX", "WI"} for store in stores)
         assert all(
-            product.m5_item_id is None for product in session.query(Product).all()
+            store.assigned_warehouse.distributor_id == store.distributor_id
+            for store in stores
         )
-        assert session.query(Inventory).count() == 650
-        assert (
-            session.query(Inventory).filter(Inventory.warehouse_id.is_not(None)).count()
-            == 150
-        )
-        assert (
-            session.query(Inventory).filter(Inventory.store_id.is_not(None)).count()
-            == 500
-        )
-        assert all(
-            warehouse.latitude is not None and warehouse.longitude is not None
-            for warehouse in session.query(Warehouse)
-        )
+        assert len(products) == 50
+        assert all(product.m5_item_id is not None for product in products)
+        assert session.query(Inventory).count() == 0
         for distributor in session.query(Distributor):
             assert sum(store.distributor_id == distributor.id for store in stores) == 5
             assert (
@@ -62,28 +85,16 @@ def test_seed_is_reproducible_and_does_not_invent_m5_ids(engine) -> None:
                 session.query(Driver).filter_by(distributor_id=distributor.id).count()
                 == 5
             )
-        for store in stores:
-            assert store.assigned_warehouse.distributor_id == store.distributor_id
+        assert session.query(Warehouse).count() == 3
 
 
-def test_seed_accepts_actual_m5_identifier_configuration(engine) -> None:
-    catalog = {
-        "stores": [{"store_id": "CA_1", "state_id": "CA"}],
-        "products": [{"item_id": "ITEM_001", "dept_id": "FOODS_1", "cat_id": "FOODS"}],
-    }
-    run_seed(engine, None)
-    # Actual catalog IDs replace synthetic placeholders without growing the network.
-    from scripts.seed import seed_database
-
-    with Session(engine) as session, session.begin():
-        counts = seed_database(session, catalog)
-
-    assert counts["stores"] == 10
-    assert counts["products"] == 50
-    assert counts["inventory_records"] == 650
+def test_seed_rejects_wrong_size_or_non_m5_store_catalog(engine) -> None:
+    catalog = _catalog()
+    catalog["stores"] = catalog["stores"][:-1]
     with Session(engine) as session:
-        m5_store = session.query(Store).filter_by(m5_store_id="CA_1").one()
-        assert m5_store.state_id == "CA"
-        m5_product = session.query(Product).filter_by(m5_item_id="ITEM_001").one()
-        assert m5_product.department_id == "FOODS_1"
-        assert m5_product.category_id == "FOODS"
+        try:
+            seed_database(session, catalog)
+        except ValueError as error:
+            assert "exactly 10 M5 stores" in str(error)
+        else:
+            raise AssertionError("invalid catalog unexpectedly accepted")

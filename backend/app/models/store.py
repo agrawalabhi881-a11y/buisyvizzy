@@ -43,6 +43,12 @@ class Store(PrimaryKeyMixin, CreatedAtMixin, Base):
 
     m5_store_id: Mapped[str | None] = mapped_column("store_id", String(20), unique=True)
     synthetic_code: Mapped[str | None] = mapped_column(String(32), unique=True)
+    location_source: Mapped[str] = mapped_column(
+        String(80),
+        default="approximate_seed_location",
+        server_default="approximate_seed_location",
+        nullable=False,
+    )
     state_id: Mapped[str] = mapped_column(String(8), nullable=False)
     name: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
     distributor_id: Mapped[int] = mapped_column(

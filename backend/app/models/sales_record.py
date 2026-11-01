@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
@@ -36,6 +36,12 @@ class DailySalesRecord(PrimaryKeyMixin, Base):
         ForeignKey("calendar_dates.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     units_sold: Mapped[int] = mapped_column(nullable=False)
+    source_dataset: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default="m5_forecasting",
+        server_default=text("'m5_forecasting'"),
+    )
 
     product: Mapped[Product] = relationship(back_populates="sales_records")
     store: Mapped[Store] = relationship()

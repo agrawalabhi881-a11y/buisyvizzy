@@ -15,6 +15,9 @@ venv/
 
 # Data
 data/raw/*
+!data/raw/m5/
+data/raw/m5/*
+!data/raw/m5/.gitkeep
 data/processed/*
 data/synthetic/*
 !data/raw/.gitkeep
