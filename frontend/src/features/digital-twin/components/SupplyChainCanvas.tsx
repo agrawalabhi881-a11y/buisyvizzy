@@ -19,11 +19,17 @@ import { mockNetwork } from '../data/mockNetwork'
 import SupplierNode from './SupplierNode'
 import WarehouseNode from './WarehouseNode'
 import StoreNode from './StoreNode'
+import TransportEdge from './TransportEdge'
+import NodeDetailsPanel from './NodeDetailsPanel'
 
 const nodeTypes = {
   supplier: SupplierNode,
   warehouse: WarehouseNode,
   store: StoreNode,
+}
+
+const edgeTypes = {
+  transport: TransportEdge,
 }
 
 function SupplyChainCanvas() {
@@ -47,11 +53,11 @@ function SupplyChainCanvas() {
 
   return (
     <div className="relative h-[750px] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
-
       <ReactFlow<NetworkNode, NetworkEdge>
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
@@ -74,40 +80,7 @@ function SupplyChainCanvas() {
         />
       </ReactFlow>
 
-      {selectedNode && (
-        <div className="absolute right-4 top-4 z-10 w-64 rounded-xl border border-slate-700 bg-slate-900 p-4 shadow-xl">
-
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-white">
-              Node Details
-            </h3>
-
-            <button
-              onClick={closeDetails}
-              className="text-slate-400 hover:text-white"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="mt-4 space-y-2 text-sm text-slate-300">
-            <p>
-              <span className="text-slate-500">Name:</span>{' '}
-              {selectedNode.data.label}
-            </p>
-
-            <p>
-              <span className="text-slate-500">Type:</span>{' '}
-              {selectedNode.type}
-            </p>
-
-            <p>
-              <span className="text-slate-500">ID:</span>{' '}
-              {selectedNode.id}
-            </p>
-          </div>
-        </div>
-      )}
+      <NodeDetailsPanel node={selectedNode} onClose={closeDetails} />
 
       <div className="absolute left-4 top-4 z-10 rounded-lg border border-slate-700 bg-slate-900/95 p-3">
         <p className="text-xs font-semibold text-white">
@@ -121,7 +94,6 @@ function SupplyChainCanvas() {
           <p className="text-slate-400">━ Transport routes</p>
         </div>
       </div>
-
     </div>
   )
 }

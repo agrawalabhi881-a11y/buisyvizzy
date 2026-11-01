@@ -1,6 +1,15 @@
+import os
+import sys
 import pytest
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session
+
+# Ensure both backend root and repo root are in sys.path
+backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+repo_root = os.path.abspath(os.path.join(backend_root, ".."))
+for p in [backend_root, repo_root]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from app.database.base import Base
 from app.models import Distributor, Manufacturer, Product, Store, Warehouse

@@ -1,5 +1,8 @@
 @echo off
-set PYTHON_EXE=C:\Users\Varad\AppData\Local\Programs\Python\Python314\python.exe
+set PYTHON_EXE=C:\Users\Varad\anaconda3\python.exe
+if not exist "%PYTHON_EXE%" (
+    set PYTHON_EXE=C:\Users\Varad\AppData\Local\Programs\Python\Python314\python.exe
+)
 if not exist "%PYTHON_EXE%" (
     set PYTHON_EXE=python
 )

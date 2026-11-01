@@ -4,10 +4,16 @@ Validates stochastic demand sampling, lognormal transit lead-times, and truck fa
 """
 
 import numpy as np
-from backend.app.sim.demand import DemandGenerator
-from backend.app.sim.transit import TransitEngine
-from backend.app.sim.network import NetworkState, TruckState, ShipmentState
-from contracts.models import TruckStatus, OrderStatus
+try:
+    from app.sim.demand import DemandGenerator
+    from app.sim.transit import TransitEngine
+    from app.sim.network import NetworkState, TruckState, ShipmentState
+    from app.contracts.models import TruckStatus, OrderStatus
+except ImportError:
+    from backend.app.sim.demand import DemandGenerator
+    from backend.app.sim.transit import TransitEngine
+    from backend.app.sim.network import NetworkState, TruckState, ShipmentState
+    from contracts.models import TruckStatus, OrderStatus
 
 
 def test_demand_generator_seasonality():

@@ -4,7 +4,10 @@ Verifies that the simulation is 100% reproducible given a fixed seed.
 Key judging requirement for fair, paired strategy comparisons.
 """
 
-from backend.app.sim.runner import MonteCarloScenarioRunner
+try:
+    from app.sim.runner import MonteCarloScenarioRunner
+except ImportError:
+    from backend.app.sim.runner import MonteCarloScenarioRunner
 
 
 def test_identical_seed_produces_identical_results():

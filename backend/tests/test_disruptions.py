@@ -3,8 +3,12 @@ backend/tests/test_disruptions.py
 Tests disruption injection and resilience recovery tracking.
 """
 
-from contracts.models import DisruptionContract, DisruptionType
-from backend.app.sim.runner import MonteCarloScenarioRunner
+try:
+    from app.contracts.models import DisruptionContract, DisruptionType
+    from app.sim.runner import MonteCarloScenarioRunner
+except ImportError:
+    from contracts.models import DisruptionContract, DisruptionType
+    from backend.app.sim.runner import MonteCarloScenarioRunner
 
 
 def test_disruption_impact_and_recovery():

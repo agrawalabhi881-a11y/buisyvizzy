@@ -8,14 +8,34 @@ from typing import Dict, List, Optional
 import numpy as np
 from pydantic import BaseModel, Field
 
-from contracts.seed_specs import (
-    generate_seed_products,
-    generate_seed_network,
-    generate_seed_trucks,
-    generate_initial_warehouse_inventories,
-)
-from contracts.models import DisruptionContract, KPISnapshotContract
-from backend.app.sim.engine import SupplyChainSimulationEngine
+try:
+    from app.contracts.seed_specs import (
+        generate_seed_products,
+        generate_seed_network,
+        generate_seed_trucks,
+        generate_initial_warehouse_inventories,
+    )
+    from app.contracts.models import DisruptionContract, KPISnapshotContract
+    from app.sim.engine import SupplyChainSimulationEngine
+except ImportError:
+    try:
+        from contracts.seed_specs import (
+            generate_seed_products,
+            generate_seed_network,
+            generate_seed_trucks,
+            generate_initial_warehouse_inventories,
+        )
+        from contracts.models import DisruptionContract, KPISnapshotContract
+        from backend.app.sim.engine import SupplyChainSimulationEngine
+    except ImportError:
+        from backend.app.contracts.seed_specs import (
+            generate_seed_products,
+            generate_seed_network,
+            generate_seed_trucks,
+            generate_initial_warehouse_inventories,
+        )
+        from backend.app.contracts.models import DisruptionContract, KPISnapshotContract
+        from backend.app.sim.engine import SupplyChainSimulationEngine
 
 
 class ScenarioComparisonReport(BaseModel):

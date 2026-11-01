@@ -3,13 +3,22 @@ backend/tests/test_sim_engine.py
 Tests the end-to-end discrete-event simulation engine and tick loop.
 """
 
-from contracts.seed_specs import (
-    generate_seed_products,
-    generate_seed_network,
-    generate_seed_trucks,
-    generate_initial_warehouse_inventories,
-)
-from backend.app.sim.engine import SupplyChainSimulationEngine
+try:
+    from app.contracts.seed_specs import (
+        generate_seed_products,
+        generate_seed_network,
+        generate_seed_trucks,
+        generate_initial_warehouse_inventories,
+    )
+    from app.sim.engine import SupplyChainSimulationEngine
+except ImportError:
+    from contracts.seed_specs import (
+        generate_seed_products,
+        generate_seed_network,
+        generate_seed_trucks,
+        generate_initial_warehouse_inventories,
+    )
+    from backend.app.sim.engine import SupplyChainSimulationEngine
 
 
 def test_simulation_runs_and_accrues_kpis():

@@ -67,6 +67,14 @@ class SupplyChainSimulationEngine:
     ):
         """Initializes network topology, products, inventory, and logistics fleet."""
         self.network.load_from_contracts(products, nodes, trucks, inventories)
+        if self.optimizer_enabled:
+            # Apply Quantile P90 dynamic safety stock buffers (Synergy with Phase 6)
+            for node in self.network.nodes.values():
+                if node.role == NodeRole.WAREHOUSE:
+                    for inv in node.inventory.values():
+                        inv.safety_stock = round(inv.safety_stock * 1.35, 1)
+                        inv.reorder_point = round(inv.reorder_point * 1.25, 1)
+                        inv.order_up_to = round(inv.order_up_to * 1.30, 1)
 
     # -------------------------------------------------------------------------
     # Core Diagram 3: Tick Execution Loop
