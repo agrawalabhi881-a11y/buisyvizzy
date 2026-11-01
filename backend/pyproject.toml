@@ -6,14 +6,16 @@ build-backend = "setuptools.build_meta"
 name = "supply-chain-digital-twin"
 version = "0.1.0"
 description = "AI-powered supply chain digital twin"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.12,<3.14"
 dependencies = [
     "alembic>=1.14,<2",
     "fastapi>=0.115,<1",
+    "lightgbm>=4.0,<5",
     "numpy>=2.0,<3",
     "pandas>=2.2,<4",
     "psycopg[binary]>=3.2,<4",
     "pydantic-settings>=2.7,<3",
+    "scipy>=1.13,<2",
     "simpy>=4.1,<5",
     "sqlalchemy>=2.0,<3",
     "uvicorn[standard]>=0.34,<1",

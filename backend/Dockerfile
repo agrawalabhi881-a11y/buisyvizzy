@@ -3,6 +3,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY pyproject.toml ./
 COPY app ./app
+COPY contracts ./contracts
 RUN pip install --no-cache-dir .
 COPY alembic.ini ./
 COPY migrations ./migrations
