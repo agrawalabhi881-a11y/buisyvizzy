@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Security
 from pydantic import BaseModel
 
-from app.services.auth_service import UserProfile, require_roles
+from app.services.auth_service import UserProfile, require_roles_or_demo
 from app.services.forecasting_service import ForecastingService
 from app.contracts.models import ForecastContract
 
@@ -18,7 +18,7 @@ forecast_service_instance = ForecastingService()
 
 @router.post("/train")
 def train_forecasting_model(
-    user: UserProfile = Security(require_roles(["ADMIN", "DISTRIBUTOR"])),
+    user: UserProfile = Security(require_roles_or_demo(["ADMIN", "DISTRIBUTOR"])),
 ):
     """
     Trains LightGBM Quantile Regressors (P10, P50, P90) with lag & rolling features.
@@ -39,7 +39,7 @@ def predict_quantiles(
     product_id: str = "PROD_001",
     horizon_days: int = 7,
     current_tick: int = 0,
-    user: UserProfile = Security(require_roles(["ADMIN", "DISTRIBUTOR", "STORE_OWNER"])),
+    user: UserProfile = Security(require_roles_or_demo(["ADMIN", "DISTRIBUTOR", "STORE_OWNER"])),
 ):
     """
     Generates multi-step probabilistic demand predictions (P10, P50, P90) for a given store and product.

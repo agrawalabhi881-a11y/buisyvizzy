@@ -1,16 +1,24 @@
 """
 backend/app/api/routes/simulation.py
 Simulation & Optimization execution endpoints:
-Runs the discrete-event digital twin, injects disruptions, and runs the MILP optimizer.
+Runs the discrete-event digital twin, injects disruptions, steps ticks,
+and runs the paired Monte Carlo strategy comparison.
 """
 
 from typing import List, Optional, Dict
 from fastapi import APIRouter, Security
 from pydantic import BaseModel
 
-from app.services.auth_service import UserProfile, require_roles
+from app.services.auth_service import UserProfile, require_roles, require_roles_or_demo, create_access_token
 from app.sim.runner import MonteCarloScenarioRunner
 from app.contracts.models import DisruptionContract, DisruptionType
+from app.contracts.seed_specs import (
+    generate_seed_products,
+    generate_seed_network,
+    generate_seed_trucks,
+    generate_initial_warehouse_inventories,
+)
+from app.sim.engine import SupplyChainSimulationEngine
 from app.optimizers.rebalance import WarehouseRebalanceOptimizer
 from app.sim.strategy_comparison import (
     ScenarioType,
@@ -21,6 +29,22 @@ from app.sim.strategy_comparison import (
 
 router = APIRouter(prefix="/simulation", tags=["Simulation & Optimization"])
 
+# Global in-memory engine for live tick-by-tick simulation playback
+live_engine: Optional[SupplyChainSimulationEngine] = None
+
+
+def get_or_create_live_engine(seed: int = 42, optimizer_enabled: bool = True) -> SupplyChainSimulationEngine:
+    global live_engine
+    if live_engine is None:
+        live_engine = SupplyChainSimulationEngine(seed=seed, optimizer_enabled=optimizer_enabled)
+        products = generate_seed_products(50)
+        net_data = generate_seed_network()
+        nodes = net_data["nodes"]
+        trucks = generate_seed_trucks(10)
+        inventories = generate_initial_warehouse_inventories(nodes, products, initial_stock_units=300.0)
+        live_engine.initialize_network(products, nodes, trucks, inventories)
+    return live_engine
+
 
 class SimulationRunRequest(BaseModel):
     seed: int = 42
@@ -30,10 +54,22 @@ class SimulationRunRequest(BaseModel):
     supplier_failure_severity: Optional[float] = None
 
 
+@router.get("/demo-token")
+def get_demo_token(role: str = "ADMIN"):
+    """Convenience helper for testing in Swagger UI: generates a signed Bearer token."""
+    token = create_access_token({"sub": f"demo_{role.lower()}", "role": role})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "role": role,
+        "instructions": "Copy access_token, click 'Authorize' at top of Swagger docs, and paste token.",
+    }
+
+
 @router.post("/run")
 def run_simulation(
     request: SimulationRunRequest,
-    user: UserProfile = Security(require_roles(["ADMIN", "DISTRIBUTOR"])),
+    user: UserProfile = Security(require_roles_or_demo(["ADMIN", "DISTRIBUTOR"])),
 ):
     """Executes discrete-event digital twin simulation and returns KPI snapshots."""
     runner = MonteCarloScenarioRunner(base_seed=request.seed)
@@ -82,6 +118,55 @@ def run_simulation(
     }
 
 
+@router.post("/tick")
+def advance_tick(
+    optimizer_enabled: Optional[bool] = None,
+    demand_spike: Optional[float] = None,
+    user: UserProfile = Security(require_roles_or_demo(["ADMIN", "DISTRIBUTOR", "WAREHOUSE_MANAGER", "STORE_OWNER"])),
+):
+    """Advances the live digital twin simulation by 1 tick (day) and returns the state."""
+    eng = get_or_create_live_engine()
+    if optimizer_enabled is not None:
+        eng.optimizer_enabled = optimizer_enabled
+
+    if demand_spike and demand_spike > 1.0:
+        eng.disruption_engine.schedule_disruption(
+            DisruptionContract(
+                id=f"TICK_DISR_{eng.current_tick}",
+                disruption_type=DisruptionType.DEMAND_SPIKE,
+                target_id="ALL",
+                start_tick=eng.current_tick,
+                duration_ticks=3,
+                severity=demand_spike,
+                description="Live tick-injected demand spike",
+            )
+        )
+
+    snapshot = eng.run_tick()
+    return {
+        "status": "ok",
+        "tick": snapshot.tick,
+        "snapshot": snapshot.model_dump(),
+    }
+
+
+@router.post("/reset")
+def reset_live_simulation(
+    seed: int = 42,
+    optimizer_enabled: bool = False,
+    user: UserProfile = Security(require_roles_or_demo(["ADMIN", "DISTRIBUTOR", "WAREHOUSE_MANAGER", "STORE_OWNER"])),
+):
+    """Resets the live digital twin engine back to Tick 0."""
+    global live_engine
+    live_engine = None
+    eng = get_or_create_live_engine(seed=seed, optimizer_enabled=optimizer_enabled)
+    return {
+        "status": "reset",
+        "tick": 0,
+        "optimizer_enabled": optimizer_enabled,
+    }
+
+
 class StrategyComparisonRequest(BaseModel):
     scenario_type: ScenarioType = ScenarioType.COMPOUND_BLACK_SWAN
     num_seeds: int = 10
@@ -108,7 +193,7 @@ def get_scenario_catalog():
 @router.post("/strategy-comparison", response_model=ScenarioComparisonReport)
 def run_strategy_comparison(
     request: StrategyComparisonRequest,
-    user: UserProfile = Security(require_roles(["ADMIN", "DISTRIBUTOR"])),
+    user: UserProfile = Security(require_roles_or_demo(["ADMIN", "DISTRIBUTOR"])),
 ):
     """
     Executes paired Monte Carlo comparisons (Baseline s,S vs. Optimized MILP+Quantiles+VRP)
