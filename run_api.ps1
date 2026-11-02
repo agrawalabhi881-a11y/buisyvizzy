@@ -1,12 +1,16 @@
-$pythonExe = "C:\Users\Varad\anaconda3\python.exe"
-if (-not (Test-Path $pythonExe)) {
-    $pythonExe = "python"
+# run_api.ps1
+$PythonExe = "C:\Users\Varad\anaconda3\python.exe"
+if (-not (Test-Path $PythonExe)) {
+    $PythonExe = "python"
 }
-$backendDir = Join-Path $PSScriptRoot "backend"
-Set-Location $backendDir
+
+Set-Location "$PSScriptRoot\backend"
 Write-Host "===================================================================" -ForegroundColor Cyan
-Write-Host "  Starting Supply Chain Digital Twin API Server..." -ForegroundColor Green
+Write-Host "  Starting NEXUS Supply Chain Digital Twin Platform..." -ForegroundColor Green
+Write-Host "  Opening Web App at:    http://localhost:8000/web" -ForegroundColor Cyan
 Write-Host "  Opening Swagger UI at: http://localhost:8000/docs" -ForegroundColor Yellow
 Write-Host "===================================================================" -ForegroundColor Cyan
+
+Start-Process "http://localhost:8000/web"
 Start-Process "http://localhost:8000/docs"
-& $pythonExe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+& $PythonExe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
