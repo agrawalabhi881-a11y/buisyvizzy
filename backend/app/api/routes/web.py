@@ -1,7 +1,7 @@
 """
 backend/app/api/routes/web.py
-Serves the standalone NEXUS Arrakis web application directly from FastAPI at /web and /app.
-Zero external npm/node dependencies required to view and operate the full digital twin.
+Serves the complete interactive NEXUS Arrakis digital twin web application directly from FastAPI at /web and /app.
+Zero external npm/node dependencies required. Self-contained vector map and high-DPI canvas charts.
 """
 
 from fastapi import APIRouter
@@ -9,63 +9,102 @@ from fastapi.responses import HTMLResponse
 
 router = APIRouter(tags=["Web Dashboard"])
 
-WEB_HTML = """<!DOCTYPE html>
+WEB_HTML = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEXUS — Supply Chain Intelligence & Disruption Digital Twin</title>
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS CDN with full native fallback styling -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Leaflet CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { background-color: #08090D; color: #F8FAFC; font-family: ui-sans-serif, system-ui, sans-serif; }
-    .glass-card { background: rgba(13, 15, 23, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .arrakis-border { border-color: rgba(255, 255, 255, 0.08); }
-    .custom-marker { background: rgba(6, 182, 212, 0.9); border: 2px solid #fff; border-radius: 9999px; text-align: center; }
+    :root {
+      --bg-dark: #07080C;
+      --card-bg: rgba(14, 18, 27, 0.88);
+      --card-border: rgba(255, 255, 255, 0.09);
+      --accent-cyan: #06B6D4;
+      --accent-gold: #F59E0B;
+      --accent-purple: #8B5CF6;
+      --accent-red: #EF4444;
+      --accent-emerald: #10B981;
+    }
+    body {
+      background-color: var(--bg-dark);
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.4);
+    }
+    .arrakis-border { border-color: var(--card-border); }
+    .pulse-danger {
+      animation: pulseDanger 1.5s infinite;
+    }
+    @keyframes pulseDanger {
+      0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 4px #ef4444); }
+      50% { transform: scale(1.15); opacity: 0.8; filter: drop-shadow(0 0 16px #ef4444); }
+      100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 4px #ef4444); }
+    }
+    .rescue-beam {
+      stroke-dasharray: 8 6;
+      animation: dashMove 1s linear infinite;
+    }
+    @keyframes dashMove {
+      to { stroke-dashoffset: -28; }
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #07080C; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500/30">
 
-  <!-- Top Header / Arrakis Command Deck -->
-  <header class="h-16 shrink-0 border-b arrakis-border bg-slate-950/90 px-6 flex items-center justify-between sticky top-0 z-50">
+  <!-- ================= TOP HEADER / TELEMETRY DECK ================= -->
+  <header class="h-16 shrink-0 border-b arrakis-border bg-slate-950/95 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md">
     <div class="flex items-center gap-4">
       <div class="flex items-center gap-2.5">
-        <div class="h-8 w-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-sm">
+        <div class="h-9 w-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-black text-sm tracking-wider shadow-inner">
           NX
         </div>
         <div>
           <div class="flex items-center gap-2">
             <span class="text-sm font-black tracking-wider text-white">NEXUS</span>
-            <span class="font-mono text-[9px] uppercase tracking-widest text-cyan-400 font-bold">SCM DIGITAL TWIN // ARRAKIS</span>
+            <span class="font-mono text-[9px] uppercase tracking-widest text-cyan-400 font-bold px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+              SCM DIGITAL TWIN // ARRAKIS
+            </span>
           </div>
-          <p class="font-mono text-[10px] text-slate-400">Authoritative Decision Support Platform</p>
+          <p class="font-mono text-[10px] text-slate-400">Autonomous Disruption Mitigation & Multi-Echelon Decision Support</p>
         </div>
       </div>
 
-      <!-- Ticker -->
+      <!-- Ticker Metrics -->
       <div class="hidden lg:flex items-center gap-3 border-l arrakis-border pl-4 text-xs font-mono">
         <span class="text-slate-300">DAY <span id="tick-day" class="text-white font-bold">1</span> • <span id="tick-label" class="text-cyan-400 font-bold">T+0</span></span>
         <span class="text-slate-700">|</span>
         <span class="flex items-center gap-1.5">
           <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-slate-400">OTIF:</span>
+          <span class="text-slate-400">OTIF Fill:</span>
           <span id="header-fill-rate" class="text-emerald-400 font-bold">98.5%</span>
         </span>
         <span class="text-slate-700">|</span>
-        <span class="text-slate-300">Fleet: <strong class="text-white">10 Trucks</strong> (7 Transit, 3 Docked)</span>
+        <span class="text-slate-300">Fleet: <strong id="header-fleet" class="text-white">10 Trucks (7 Transit, 3 Docked)</strong></span>
         <span class="text-slate-700">|</span>
-        <span id="disr-badge" class="hidden text-red-400 font-bold">⚠️ Shock Active</span>
+        <span id="disr-badge" class="hidden text-amber-400 font-bold flex items-center gap-1">
+          <span class="h-2 w-2 rounded-full bg-amber-400 animate-ping"></span> Shock Active
+        </span>
       </div>
     </div>
 
     <!-- Right Header Controls -->
-    <div class="flex items-center gap-3">
-      <a href="/docs" target="_blank" class="rounded-xl border arrakis-border bg-slate-900 px-3 py-1.5 text-xs font-mono text-cyan-400 hover:bg-slate-800 transition">
+    <div class="flex items-center gap-2.5">
+      <a href="/docs" target="_blank" class="rounded-xl border arrakis-border bg-slate-900 px-3 py-1.5 text-xs font-mono text-cyan-400 hover:bg-slate-800 hover:border-cyan-500/40 transition">
         Swagger API Docs
       </a>
       <div class="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-mono text-emerald-400">
@@ -75,87 +114,92 @@ WEB_HTML = """<!DOCTYPE html>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
+  <!-- ================= MAIN DASHBOARD CONTAINER ================= -->
+  <main class="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6">
 
-    <!-- 1. Guided Demo Tour Bar (Stage A -> H) -->
-    <div class="glass-card rounded-2xl p-5 space-y-4">
+    <!-- 1. GUIDED JUDGING DEMO BAR (8-STAGE PIPELINE) -->
+    <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
       <div class="flex items-center justify-between border-b arrakis-border pb-3">
         <div class="flex items-center gap-2">
           <span class="font-mono text-[10px] uppercase tracking-widest text-cyan-400 font-bold">
             GUIDED JUDGING DEMO // 8-STAGE END-TO-END PIPELINE
           </span>
-          <span class="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono text-slate-400" id="tour-step-badge">
-            Stage 1 of 8: Healthy Network
+          <span class="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono text-slate-300" id="tour-step-badge">
+            Stage 1 of 8: STAGE A
           </span>
         </div>
-        <span class="font-mono text-[10px] text-slate-500">[Authoritative Backend Pipeline]</span>
+        <span class="font-mono text-[10px] text-slate-400 hidden sm:inline">[Deterministic Simulation Loop]</span>
       </div>
 
+      <!-- 8 Stage Step Buttons -->
       <div class="grid grid-cols-4 sm:grid-cols-8 gap-2">
-        <button onclick="selectTourStage(0)" id="tour-btn-0" class="rounded-xl border border-cyan-400 bg-cyan-500/15 p-2 text-left">
+        <button onclick="selectTourStage(0)" id="tour-btn-0" class="rounded-xl border border-cyan-400 bg-cyan-500/20 p-2 text-left transition hover:scale-105">
           <p class="font-mono text-[9px] font-bold text-cyan-300">STAGE A</p>
           <p class="text-[11px] font-semibold text-white truncate">Healthy Twin</p>
         </button>
-        <button onclick="selectTourStage(1)" id="tour-btn-1" class="rounded-xl border arrakis-border bg-slate-900/40 p-2 text-left">
-          <p class="font-mono text-[9px] font-bold text-slate-500">STAGE B</p>
-          <p class="text-[11px] font-semibold text-slate-400 truncate">Forecast Risk</p>
+        <button onclick="selectTourStage(1)" id="tour-btn-1" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
+          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE B</p>
+          <p class="text-[11px] font-semibold text-slate-300 truncate">Forecast Risk</p>
         </button>
-        <button onclick="selectTourStage(2)" id="tour-btn-2" class="rounded-xl border arrakis-border bg-slate-900/40 p-2 text-left">
-          <p class="font-mono text-[9px] font-bold text-slate-500">STAGE C</p>
-          <p class="text-[11px] font-semibold text-slate-400 truncate">Inject Shock</p>
+        <button onclick="selectTourStage(2)" id="tour-btn-2" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
+          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE C</p>
+          <p class="text-[11px] font-semibold text-slate-300 truncate">Inject Shock</p>
         </button>
-        <button onclick="selectTourStage(3)" id="tour-btn-3" class="rounded-xl border arrakis-border bg-slate-900/40 p-2 text-left">
-          <p class="font-mono text-[9px] font-bold text-slate-500">STAGE D</p>
-          <p class="text-[11px] font-semibold text-slate-400 truncate">Observe Impact</p>
+        <button onclick="selectTourStage(3)" id="tour-btn-3" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
+          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE D</p>
+          <p class="text-[11px] font-semibold text-slate-300 truncate">Breakdown</p>
         </button>
-        <button onclick="selectTourStage(4)" id="tour-btn-4" class="rounded-xl border arrakis-border bg-slate-900/40 p-2 text-left">
-          <p class="font-mono text-[9px] font-bold text-slate-500">STAGE E</p>
-          <p class="text-[11px] font-semibold text-slate-400 truncate">AI Alert</p>
+        <button onclick="selectTourStage(4)" id="tour-btn-4" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
+          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE E</p>
+          <p class="text-[11px] font-semibold text-slate-300 truncate">Driver Alert</p>
         </button>
-        <button onclick="selectTourStage(5)" id="tour-btn-5" class="rounded-xl border arrakis-border bg-slate-900/40 p-2 text-left">
-          <p class="font-mono text-[9px] font-bold text-slate-500">STAGE F</p>
-          <p class="text-[11px] font-semibold text-slate-400 truncate">Approve Rescue</p>
+        <button onclick="selectTourStage(5)" id="tour-btn-5" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
+          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE F</p>
+          <p class="text-[11px] font-semibold text-slate-300 truncate">Rescue Reroute</p>
         </button>
-        <button onclick="selectTourStage(6)" id="tour-btn-6" class="rounded-xl border arrakis-border bg-slate-900/40 p-2 text-left">
-          <p class="font-mono text-[9px] font-bold text-slate-500">STAGE G</p>
-          <p class="text-[11px] font-semibold text-slate-400 truncate">Strategy Lab</p>
+        <button onclick="selectTourStage(6)" id="tour-btn-6" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
+          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE G</p>
+          <p class="text-[11px] font-semibold text-slate-300 truncate">Strategy Lab</p>
         </button>
-        <button onclick="selectTourStage(7)" id="tour-btn-7" class="rounded-xl border arrakis-border bg-slate-900/40 p-2 text-left">
-          <p class="font-mono text-[9px] font-bold text-slate-500">STAGE H</p>
-          <p class="text-[11px] font-semibold text-slate-400 truncate">Reset & Replay</p>
+        <button onclick="selectTourStage(7)" id="tour-btn-7" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
+          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE H</p>
+          <p class="text-[11px] font-semibold text-slate-300 truncate">Reset & Replay</p>
         </button>
       </div>
 
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border arrakis-border bg-slate-900/60 p-4">
+      <!-- Stage Action Banner -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border arrakis-border bg-slate-900/70 p-4">
         <div>
-          <h4 id="tour-title" class="text-sm font-bold text-white">Stage A: Healthy Digital Twin (Baseline Operations)</h4>
+          <h4 id="tour-title" class="text-sm font-bold text-white flex items-center gap-2">
+            <span>Stage A: Healthy Digital Twin (Baseline Operations)</span>
+          </h4>
           <p id="tour-desc" class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
             3 regional distribution hubs, 20 retail stores, and 10 fleet vehicles operating at 98.5% OTIF service level with (s,S) replenishment policies.
           </p>
         </div>
-        <button id="tour-action-btn" onclick="executeCurrentTourAction()" class="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition">
+        <button id="tour-action-btn" onclick="executeCurrentTourAction()" class="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition shrink-0">
           Inspect Geographic Map
         </button>
       </div>
     </div>
 
-    <!-- 2. Simulation Playback Controls Bar -->
+    <!-- 2. SIMULATION CONTROLS & CLOCK BAR -->
     <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="rounded-xl bg-cyan-500/10 px-3.5 py-2 border border-cyan-500/25">
+        <div class="rounded-xl bg-cyan-500/10 px-4 py-2 border border-cyan-500/25">
           <span class="text-[10px] uppercase font-mono tracking-wider text-slate-400">Simulation Clock</span>
           <p id="sim-tick-disp" class="font-mono text-2xl font-bold text-cyan-400">T+0</p>
         </div>
         <div class="text-xs">
-          <p class="font-semibold text-white">Day <span id="sim-day-disp">1</span> of Operations</p>
-          <p class="font-mono text-[10px] text-slate-400">Canonical 9-Step Discrete-Event Tick</p>
+          <p class="font-semibold text-white">Day <span id="sim-day-disp">1</span> of 30 Operations</p>
+          <p class="font-mono text-[10px] text-slate-400">Canonical 9-Step Discrete-Event Tick Loop</p>
         </div>
       </div>
 
+      <!-- Playback Buttons -->
       <div class="flex items-center gap-2">
-        <button id="play-btn" onclick="togglePlay()" class="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-cyan-500/20 transition">
-          Run Live Twin
+        <button id="play-btn" onclick="togglePlay()" class="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-cyan-500/20 transition flex items-center gap-1.5">
+          <span id="play-icon">▶</span> <span id="play-text">Run Live Twin</span>
         </button>
         <button onclick="stepSimTick()" class="rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-200 transition">
           Step (+1d)
@@ -165,57 +209,94 @@ WEB_HTML = """<!DOCTYPE html>
         </button>
       </div>
 
-      <button id="opt-toggle" onclick="toggleOptimizer()" class="rounded-xl border border-purple-500/40 bg-purple-500/15 px-4 py-2.5 text-xs font-mono font-semibold text-purple-200 transition">
+      <!-- Policy Switcher -->
+      <button id="opt-toggle" onclick="toggleOptimizer()" class="rounded-xl border border-purple-500/40 bg-purple-500/15 hover:bg-purple-500/25 px-4 py-2.5 text-xs font-mono font-semibold text-purple-200 transition">
         MILP + P90 Buffer: ON
       </button>
     </div>
 
-    <!-- 3. KPI Metrics Grid -->
+    <!-- 3. KPI METRICS TELEMETRY GRID -->
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
       <div class="glass-card rounded-2xl p-4">
-        <span class="text-[10px] font-mono text-slate-400 uppercase">OTIF Fill Rate</span>
+        <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">OTIF Fill Rate</span>
         <p id="kpi-fill" class="font-mono text-2xl font-bold text-emerald-400 mt-1">98.5%</p>
-        <span class="text-[10px] font-mono text-cyan-400">[Backend KPI]</span>
+        <span class="text-[10px] font-mono text-cyan-400">[Target: &gt;95.0%]</span>
       </div>
       <div class="glass-card rounded-2xl p-4">
-        <span class="text-[10px] font-mono text-slate-400 uppercase">Total Cost</span>
+        <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Total Operating Cost</span>
         <p id="kpi-cost" class="font-mono text-2xl font-bold text-white mt-1">$14,250</p>
         <span class="text-[10px] font-mono text-cyan-400">[Procure + Hold + Fuel]</span>
       </div>
       <div class="glass-card rounded-2xl p-4">
-        <span class="text-[10px] font-mono text-slate-400 uppercase">Stockout Freq</span>
+        <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Stockout Frequency</span>
         <p id="kpi-stockout" class="font-mono text-2xl font-bold text-slate-300 mt-1">1.2%</p>
         <span class="text-[10px] font-mono text-cyan-400">[Warehouse Shortages]</span>
       </div>
       <div class="glass-card rounded-2xl p-4">
-        <span class="text-[10px] font-mono text-slate-400 uppercase">Lost Sales (Unmet)</span>
+        <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Lost Sales (Unmet)</span>
         <p id="kpi-unmet" class="font-mono text-2xl font-bold text-emerald-400 mt-1">0 units</p>
         <span class="text-[10px] font-mono text-cyan-400">[$25.00/unit Penalty]</span>
       </div>
       <div class="glass-card rounded-2xl p-4">
-        <span class="text-[10px] font-mono text-slate-400 uppercase">Net Profit</span>
+        <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Cumulative Net Profit</span>
         <p id="kpi-profit" class="font-mono text-2xl font-bold text-emerald-400 mt-1">$38,400</p>
         <span class="text-[10px] font-mono text-cyan-400">[Revenue - Costs]</span>
       </div>
     </div>
 
-    <!-- 4. Autonomous Recommendation Spotlight -->
-    <div id="rec-spotlight" class="glass-card rounded-2xl border-amber-500/40 p-5 hidden">
+    <!-- 4. HIGH PRIORITY DRIVER DISPATCH ALERT (EMERGENCY TOAST) -->
+    <div id="driver-dispatch-modal" class="hidden rounded-2xl border-2 border-red-500/80 bg-red-950/90 p-5 shadow-2xl shadow-red-900/50 backdrop-blur-lg">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="h-10 w-10 rounded-xl bg-red-600/30 border border-red-400 flex items-center justify-center text-xl shrink-0 animate-bounce">
+            🚨
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-red-500 text-[10px] font-mono font-black text-white">
+                CRITICAL EMERGENCY DISPATCH
+              </span>
+              <span class="font-mono text-xs text-red-300">INCIDENT ID: #INC-7809-BRK</span>
+            </div>
+            <h3 class="text-base font-bold text-white mt-1">
+              Truck #03 Breakdown Detected Near Newark Store #04
+            </h3>
+            <p class="text-xs text-red-200 mt-0.5 leading-relaxed">
+              <strong>Driver Notified:</strong> Nearest idle unit <strong class="text-amber-300">Elena Rostova (TRUCK_04)</strong> parked at Northeast Hub (WH_01) dock notified!
+              Rerouting instructions issued: Depart dock ➔ Intercept stranded cargo ➔ Deliver to Newark Store #04.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="approveCurrentRecommendation()" class="rounded-xl bg-amber-400 hover:bg-amber-300 px-4 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-amber-400/25 transition">
+            Dispatch Rescuer Now (TRUCK_04)
+          </button>
+          <button onclick="dismissDriverAlert()" class="rounded-xl border border-red-400/30 bg-red-900/40 hover:bg-red-900/70 px-3 py-2 text-xs font-semibold text-red-200">
+            Acknowledge
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. AUTONOMOUS MITIGATION RECOMMENDATION CARD -->
+    <div id="rec-spotlight" class="glass-card rounded-2xl border-amber-500/50 p-5 hidden">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="space-y-1">
           <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-mono font-bold text-amber-300">
-            AUTONOMOUS MITIGATION PROPOSED
+            AUTONOMOUS MITIGATION PROPOSAL
           </span>
-          <h3 id="rec-title" class="text-base font-bold text-white mt-1">Dynamic Fleet Failover: Dispatch TRUCK_04</h3>
+          <h3 id="rec-title" class="text-base font-bold text-white mt-1">
+            Dynamic Fleet Failover: Dispatch TRUCK_04 (Driver: Elena Rostova)
+          </h3>
           <p id="rec-desc" class="text-xs text-slate-300 max-w-2xl leading-relaxed">
-            Reroute nearest idle vehicle TRUCK_04 stationed at WH_01 dock to salvage stranded cargo and deliver to STORE_04.
+            Reroute nearest idle vehicle TRUCK_04 stationed at WH_01 dock to salvage 340 stranded units and deliver to Newark Store #04.
           </p>
-          <p id="rec-tradeoff" class="text-[11px] font-mono text-amber-300/80">
-            Cost: $145.00 fuel surcharge vs $8,500.00 unmet demand penalty saved. Net gain: +$8,355.00.
+          <p id="rec-tradeoff" class="text-[11px] font-mono text-amber-300">
+            Cost: $145.00 fuel/overtime vs $8,500.00 lost sales penalty prevented. Net gain: +$8,355.00.
           </p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="approveCurrentRecommendation()" class="rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition">
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="approveCurrentRecommendation()" class="rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/25 transition">
             Approve & Execute Response
           </button>
           <button onclick="dismissRecommendation()" class="rounded-xl border arrakis-border bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-400">
@@ -225,22 +306,24 @@ WEB_HTML = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- 5. Interactive Geographic Fleet & Disruption Map -->
-    <div class="glass-card rounded-2xl p-5 space-y-4">
+    <!-- 6. GEOGRAPHIC FLEET ROUTING & DYNAMIC FAILOVER MAP (SELF-CONTAINED SVG/CANVAS ENGINE) -->
+    <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b arrakis-border pb-3">
         <div>
           <div class="flex items-center gap-2">
             <h3 class="text-sm font-bold text-white">Geographic Fleet Routing & Dynamic Failover Map</h3>
             <span class="rounded bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 font-mono text-[9px] text-cyan-300">
-              [Real-Time Leaflet Canvas • 20 Stores • 3 Hubs • 10 Trucks]
+              [Live Interactive Vector Engine • 3 Hubs • 20 Stores • 10 Trucks]
             </span>
           </div>
-          <p class="text-xs text-slate-400">Live VRP route visualization with nearest-neighbor emergency failover</p>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Real-time VRP route simulation with 7 moving trucks, 3 parked at warehouse docks, and automatic nearest-neighbor rescue failover
+          </p>
         </div>
 
         <div class="flex items-center gap-2">
-          <button onclick="triggerBreakdownSim('TRUCK_03')" id="brk-btn" class="rounded-xl border border-red-500/40 bg-red-500/15 hover:bg-red-500/25 px-3 py-2 text-xs font-semibold text-red-300 transition">
-            Simulate Truck #03 Breakdown
+          <button onclick="triggerBreakdownSim('TRUCK_03')" id="brk-btn" class="rounded-xl border border-red-500/50 bg-red-500/20 hover:bg-red-500/30 px-3.5 py-2 text-xs font-bold text-red-300 transition flex items-center gap-1.5 shadow-md shadow-red-950">
+            <span>⚠️</span> Simulate Truck #03 Breakdown
           </button>
           <button onclick="resetFleetPositions()" class="rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-300 transition">
             Reset Fleet
@@ -248,323 +331,562 @@ WEB_HTML = """<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- Map Container -->
-      <div id="map" class="h-96 w-full rounded-xl overflow-hidden border arrakis-border"></div>
+      <!-- MAP CONTAINER: Zero external tile dependencies, 100% reliable interactive vector map -->
+      <div class="relative w-full h-[460px] rounded-xl overflow-hidden border arrakis-border bg-[#05060A]">
+        <!-- Map Canvas SVG -->
+        <svg id="vector-map" class="w-full h-full select-none" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <!-- Glow Filters -->
+            <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="glow-gold" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="glow-red" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <!-- Radial Gradients -->
+            <radialGradient id="grad-wh1" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
+            </radialGradient>
+            <radialGradient id="grad-wh2" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="#06B6D4" stop-opacity="0" />
+            </radialGradient>
+            <radialGradient id="grad-wh3" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#10B981" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
+            </radialGradient>
+          </defs>
 
-      <!-- Cluster Filter & Legend -->
-      <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400">
-        <div class="flex items-center gap-2">
-          <span>REGIONS:</span>
-          <button onclick="zoomCluster('all')" class="px-2.5 py-1 rounded bg-slate-800 text-white hover:bg-slate-700">All (US East)</button>
-          <button onclick="zoomCluster(0)" class="px-2.5 py-1 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 hover:bg-cyan-900">Northeast (NYC)</button>
-          <button onclick="zoomCluster(1)" class="px-2.5 py-1 rounded bg-purple-950 text-purple-300 border border-purple-800 hover:bg-purple-900">Midwest (CHI)</button>
-          <button onclick="zoomCluster(2)" class="px-2.5 py-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 hover:bg-emerald-900">Southeast (ATL)</button>
+          <!-- Background Coordinate Grid -->
+          <g id="grid-lines" stroke="#131826" stroke-width="1" stroke-dasharray="2 4"></g>
+
+          <!-- Region Aura Halos -->
+          <circle cx="780" cy="180" r="140" fill="url(#grad-wh1)" />
+          <circle cx="340" cy="150" r="140" fill="url(#grad-wh2)" />
+          <circle cx="480" cy="400" r="130" fill="url(#grad-wh3)" />
+
+          <!-- Regional Highway Corridors -->
+          <g id="corridors-layer"></g>
+
+          <!-- Dynamic Rescue Polyline -->
+          <g id="rescue-layer"></g>
+
+          <!-- Pinned Warehouses & Docks Layer -->
+          <g id="warehouses-layer"></g>
+
+          <!-- Pinned Stores Layer -->
+          <g id="stores-layer"></g>
+
+          <!-- Animated Moving & Parked Trucks Layer -->
+          <g id="trucks-layer"></g>
+        </svg>
+
+        <!-- Floating Node Telemetry Modal (Hover / Click) -->
+        <div id="node-telemetry-tooltip" class="absolute hidden z-30 pointer-events-none rounded-xl border border-cyan-500/40 bg-slate-950/95 p-3 shadow-2xl text-xs font-mono backdrop-blur-md max-w-xs">
+          <p id="tt-title" class="font-bold text-white text-sm">Node Info</p>
+          <div id="tt-content" class="mt-1 text-slate-300 space-y-0.5 text-[11px]"></div>
         </div>
-        <div class="flex items-center gap-3">
-          <span class="flex items-center gap-1"><span>🏭</span> Warehouse Hub</span>
-          <span class="flex items-center gap-1"><span>🏪</span> Retail Store</span>
-          <span class="flex items-center gap-1 text-cyan-400"><span>🚚</span> Moving Truck</span>
-          <span class="flex items-center gap-1 text-red-400"><span>⚠️</span> Broken Down</span>
-          <span class="flex items-center gap-1 text-amber-400"><span>🚚</span> Rescue Reroute</span>
+      </div>
+
+      <!-- Cluster Filter & Map Legend Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400 pt-1">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500">ZOOM REGION:</span>
+          <button onclick="setMapCluster('all')" id="clust-btn-all" class="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold hover:bg-cyan-500/30 transition">
+            All (US Network)
+          </button>
+          <button onclick="setMapCluster(0)" id="clust-btn-0" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
+            Northeast (NYC Hub)
+          </button>
+          <button onclick="setMapCluster(1)" id="clust-btn-1" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
+            Midwest (Chicago Hub)
+          </button>
+          <button onclick="setMapCluster(2)" id="clust-btn-2" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
+            Southeast (Atlanta Hub)
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-purple-500 inline-block"></span> 🏭 Warehouse Hub</span>
+          <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-cyan-400 inline-block"></span> 🏪 Retail Store</span>
+          <span class="flex items-center gap-1.5 text-cyan-300"><span class="h-2.5 w-2.5 rounded-full bg-cyan-500 inline-block"></span> 🚚 In Transit (7)</span>
+          <span class="flex items-center gap-1.5 text-slate-400"><span class="h-2.5 w-2.5 rounded bg-slate-700 inline-block"></span> 🅿️ Parked at Dock (3)</span>
+          <span class="flex items-center gap-1.5 text-red-400"><span class="h-2.5 w-2.5 rounded-full bg-red-500 inline-block animate-ping"></span> ⚠️ Breakdown</span>
+          <span class="flex items-center gap-1.5 text-amber-300"><span class="h-2.5 w-2.5 rounded-full bg-amber-400 inline-block"></span> 🚨 Rescuer</span>
         </div>
       </div>
     </div>
 
-    <!-- 6. Demand Forecasting & Historical Analytics Section -->
+    <!-- 7. DEMAND FORECASTING & STRATEGY LAB (PURE HIGH-DPI CANVAS CHARTS) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- LightGBM Forecast Card -->
+
+      <!-- LightGBM Quantile Forecast Card -->
       <div class="glass-card rounded-2xl p-5 space-y-4">
         <div class="flex items-center justify-between border-b arrakis-border pb-3">
           <div>
             <h3 class="text-sm font-bold text-white">LightGBM Probabilistic Demand Forecast</h3>
-            <p class="text-xs text-slate-400">Quantiles P10, P50, P90 with uncertainty fan</p>
+            <p class="text-xs text-slate-400">Quantiles P10, P50, P90 with uncertainty fan (PROD_001 @ Newark Store #04)</p>
           </div>
           <span class="rounded bg-purple-500/20 border border-purple-500/40 px-2 py-0.5 font-mono text-[9px] text-purple-300">
             Pinball Loss: 0.082
           </span>
         </div>
-        <div class="h-64 w-full">
-          <canvas id="forecastChart"></canvas>
+        <div class="h-64 w-full relative">
+          <canvas id="forecastCanvas" class="w-full h-full rounded-lg bg-[#05060A]"></canvas>
         </div>
         <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
           <div class="rounded-lg bg-slate-900/60 p-2 border arrakis-border">
-            <span class="text-slate-400 text-[10px]">P10 Bound</span>
-            <p class="text-cyan-400 font-bold">12.4 u/d</p>
+            <span class="text-slate-400 text-[10px]">P10 Lower Bound</span>
+            <p class="text-cyan-400 font-bold">12.4 u/day</p>
           </div>
           <div class="rounded-lg bg-slate-900/60 p-2 border arrakis-border">
-            <span class="text-slate-400 text-[10px]">P50 Median</span>
-            <p class="text-white font-bold">18.6 u/d</p>
+            <span class="text-slate-400 text-[10px]">P50 Median Forecast</span>
+            <p class="text-white font-bold">18.6 u/day</p>
           </div>
-          <div class="rounded-lg bg-purple-950/30 p-2 border border-purple-500/30">
+          <div class="rounded-lg bg-purple-950/40 p-2 border border-purple-500/40">
             <span class="text-purple-300 text-[10px]">P90 Safety Target</span>
-            <p class="text-purple-400 font-bold">26.8 u/d</p>
+            <p class="text-purple-400 font-bold">26.8 u/day</p>
           </div>
         </div>
       </div>
 
-      <!-- Strategy Comparison Benchmark Card -->
+      <!-- Strategy Lab Benchmark Card -->
       <div class="glass-card rounded-2xl p-5 space-y-4">
         <div class="flex items-center justify-between border-b arrakis-border pb-3">
           <div>
             <h3 class="text-sm font-bold text-white">Strategy Lab (Paired Monte Carlo • CRN)</h3>
-            <p class="text-xs text-slate-400">Baseline (s, S) vs. Optimized (MILP + P90 Buffer + VRP)</p>
+            <p class="text-xs text-slate-400">Baseline (s, S) vs. Optimized (MILP + P90 Buffer + Dynamic Failover)</p>
           </div>
-          <button onclick="runMonteCarloComparison()" class="rounded-lg bg-purple-600 hover:bg-purple-500 px-3 py-1.5 text-xs font-semibold text-white transition">
+          <button onclick="runMonteCarloLab()" class="rounded-lg bg-purple-600 hover:bg-purple-500 px-3 py-1.5 text-xs font-semibold text-white transition">
             Run 10 Seeds
           </button>
         </div>
-        <div class="h-64 w-full">
-          <canvas id="strategyChart"></canvas>
+        <div class="h-64 w-full relative">
+          <canvas id="strategyCanvas" class="w-full h-full rounded-lg bg-[#05060A]"></canvas>
         </div>
-        <div class="flex justify-between items-center text-xs font-mono text-slate-300 px-1">
-          <span>Student's t-test: <strong class="text-emerald-400">p &lt; 0.001 (Significant)</strong></span>
+        <div class="flex flex-wrap justify-between items-center text-xs font-mono text-slate-300 px-1 gap-2">
+          <span>Student's t-test: <strong class="text-emerald-400">p &lt; 0.001 (Statistically Significant)</strong></span>
           <span>95% CI: <strong class="text-cyan-400">[+$3,850, +$4,920]</strong></span>
         </div>
       </div>
+
     </div>
 
   </main>
 
-  <!-- Script Logic -->
+  <!-- ================= JAVASCRIPT SIMULATION LOGIC ================= -->
   <script>
-    // Global simulation state
+    // Global State
     let currentTick = 0;
     let isPlaying = false;
-    let playInterval = null;
+    let animFrameId = null;
+    let lastTickTime = Date.now();
     let optimizerEnabled = true;
     let currentTourIdx = 0;
-    let pendingRecId = null;
+    let activeCluster = 'all';
 
-    // Warehouses and Stores
+    // 3 Regional Hub Warehouses
     const WAREHOUSES = [
-      { id: 'WH_01', name: 'Northeast Hub (NYC)', lat: 40.7128, lng: -74.006, cluster: 0 },
-      { id: 'WH_02', name: 'Midwest Hub (CHI)', lat: 41.8781, lng: -87.6298, cluster: 1 },
-      { id: 'WH_03', name: 'Southeast Hub (ATL)', lat: 33.7490, lng: -84.3880, cluster: 2 },
+      { id: 'WH_01', name: 'Northeast Primary Hub (NYC/NJ)', lat: 40.7128, lng: -74.006, cluster: 0, capacity: 40000, inventory: 31200, color: '#8B5CF6' },
+      { id: 'WH_02', name: 'Midwest Logistics Hub (CHI)', lat: 41.8781, lng: -87.6298, cluster: 1, capacity: 45000, inventory: 38400, color: '#06B6D4' },
+      { id: 'WH_03', name: 'Southeast Regional Hub (ATL)', lat: 33.7490, lng: -84.3880, cluster: 2, capacity: 35000, inventory: 24900, color: '#10B981' },
     ];
 
+    // 20 Retail Stores
     const STORES = [
-      { id: 'STORE_01', name: 'Manhattan #01', lat: 40.75, lng: -73.98, cluster: 0 },
-      { id: 'STORE_02', name: 'Brooklyn #02', lat: 40.67, lng: -73.94, cluster: 0 },
-      { id: 'STORE_04', name: 'Newark #04', lat: 40.71, lng: -74.17, cluster: 0 },
-      { id: 'STORE_05', name: 'Hackensack #05', lat: 40.91, lng: -74.07, cluster: 0 },
-      { id: 'STORE_08', name: 'Chicago Loop #08', lat: 41.88, lng: -87.63, cluster: 1 },
-      { id: 'STORE_10', name: 'Albany Park #10', lat: 41.97, lng: -87.71, cluster: 1 },
-      { id: 'STORE_15', name: 'Atlanta Downtown #15', lat: 33.75, lng: -84.39, cluster: 2 },
+      // Cluster 0: Northeast (7 Stores)
+      { id: 'STORE_01', name: 'Manhattan #01', lat: 40.75, lng: -73.98, cluster: 0, demand: 45, inventory: 180 },
+      { id: 'STORE_02', name: 'Brooklyn #02', lat: 40.67, lng: -73.94, cluster: 0, demand: 52, inventory: 140 },
+      { id: 'STORE_03', name: 'Bronx #03', lat: 40.82, lng: -73.92, cluster: 0, demand: 38, inventory: 95 },
+      { id: 'STORE_04', name: 'Newark #04', lat: 40.71, lng: -74.17, cluster: 0, demand: 60, inventory: 110 },
+      { id: 'STORE_05', name: 'Hackensack #05', lat: 40.91, lng: -74.07, cluster: 0, demand: 42, inventory: 85 },
+      { id: 'STORE_06', name: 'Staten Island #06', lat: 40.57, lng: -74.15, cluster: 0, demand: 35, inventory: 160 },
+      { id: 'STORE_07', name: 'Stamford #07', lat: 41.05, lng: -73.54, cluster: 0, demand: 48, inventory: 130 },
+
+      // Cluster 1: Midwest (7 Stores)
+      { id: 'STORE_08', name: 'Chicago Loop #08', lat: 41.88, lng: -87.63, cluster: 1, demand: 55, inventory: 210 },
+      { id: 'STORE_09', name: 'Hyde Park #09', lat: 41.79, lng: -87.59, cluster: 1, demand: 40, inventory: 120 },
+      { id: 'STORE_10', name: 'Albany Park #10', lat: 41.97, lng: -87.71, cluster: 1, demand: 46, inventory: 145 },
+      { id: 'STORE_11', name: 'Evanston #11', lat: 42.04, lng: -87.68, cluster: 1, demand: 50, inventory: 175 },
+      { id: 'STORE_12', name: 'Berwyn #12', lat: 41.83, lng: -87.82, cluster: 1, demand: 36, inventory: 90 },
+      { id: 'STORE_13', name: 'Oak Lawn #13', lat: 41.70, lng: -87.75, cluster: 1, demand: 32, inventory: 130 },
+      { id: 'STORE_14', name: 'Wheaton #14', lat: 41.90, lng: -88.08, cluster: 1, demand: 44, inventory: 160 },
+
+      // Cluster 2: Southeast (6 Stores)
+      { id: 'STORE_15', name: 'Downtown Atlanta #15', lat: 33.75, lng: -84.39, cluster: 2, demand: 58, inventory: 190 },
+      { id: 'STORE_16', name: 'Buckhead #16', lat: 33.84, lng: -84.37, cluster: 2, demand: 47, inventory: 155 },
+      { id: 'STORE_17', name: 'Airport Perimeter #17', lat: 33.65, lng: -84.42, cluster: 2, demand: 51, inventory: 110 },
+      { id: 'STORE_18', name: 'Smyrna #18', lat: 33.88, lng: -84.51, cluster: 2, demand: 39, inventory: 140 },
+      { id: 'STORE_19', name: 'Decatur #19', lat: 33.71, lng: -84.28, cluster: 2, demand: 43, inventory: 125 },
+      { id: 'STORE_20', name: 'Duluth #20', lat: 33.95, lng: -84.13, cluster: 2, demand: 41, inventory: 95 },
     ];
 
+    // 10 Fleet Trucks: 7 In Transit, 3 Parked at Docks
     let trucks = [
-      { id: 'TRUCK_01', lat: 40.73, lng: -74.00, status: 'IN_TRANSIT', cluster: 0, speed: 55 },
-      { id: 'TRUCK_02', lat: 40.68, lng: -73.96, status: 'IN_TRANSIT', cluster: 0, speed: 50 },
-      { id: 'TRUCK_03', lat: 40.78, lng: -74.12, status: 'IN_TRANSIT', cluster: 0, speed: 60 },
-      { id: 'TRUCK_04', lat: 40.7128, lng: -74.006, status: 'IDLE', cluster: 0, speed: 0 },
-      { id: 'TRUCK_05', lat: 41.92, lng: -87.66, status: 'IN_TRANSIT', cluster: 1, speed: 55 },
-      { id: 'TRUCK_06', lat: 41.8781, lng: -87.6298, status: 'IDLE', cluster: 1, speed: 0 },
-      { id: 'TRUCK_07', lat: 33.76, lng: -84.38, status: 'IN_TRANSIT', cluster: 2, speed: 60 },
-      { id: 'TRUCK_08', lat: 33.7490, lng: -84.3880, status: 'IDLE', cluster: 2, speed: 0 },
+      // Cluster 0: Northeast
+      { id: 'TRUCK_01', driver: 'Marcus Vance', status: 'IN_TRANSIT', progress: 0.35, speed: 55, cargo: 380, cluster: 0, stops: ['WH_01', 'STORE_01', 'STORE_03', 'WH_01'] },
+      { id: 'TRUCK_02', driver: 'Sarah Jenkins', status: 'IN_TRANSIT', progress: 0.65, speed: 50, cargo: 290, cluster: 0, stops: ['WH_01', 'STORE_02', 'STORE_06', 'WH_01'] },
+      { id: 'TRUCK_03', driver: 'Carlos Gomez', status: 'IN_TRANSIT', progress: 0.48, speed: 60, cargo: 340, cluster: 0, stops: ['WH_01', 'STORE_04', 'STORE_05', 'WH_01'] },
+      { id: 'TRUCK_04', driver: 'Elena Rostova', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 0, stops: ['WH_01', 'WH_01'], isRescueVehicle: true }, // Docked at WH_01
+
+      // Cluster 1: Midwest
+      { id: 'TRUCK_05', driver: 'David Kowalski', status: 'IN_TRANSIT', progress: 0.25, speed: 52, cargo: 410, cluster: 1, stops: ['WH_02', 'STORE_08', 'STORE_10', 'STORE_11', 'WH_02'] },
+      { id: 'TRUCK_06', driver: 'Jamal Washington', status: 'IN_TRANSIT', progress: 0.72, speed: 58, cargo: 320, cluster: 1, stops: ['WH_02', 'STORE_09', 'STORE_13', 'STORE_12', 'WH_02'] },
+      { id: 'TRUCK_07', driver: 'Robert Meyer', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 1, stops: ['WH_02', 'WH_02'] }, // Docked at WH_02
+
+      // Cluster 2: Southeast
+      { id: 'TRUCK_08', driver: 'Marcus Thorne', status: 'IN_TRANSIT', progress: 0.40, speed: 62, cargo: 430, cluster: 2, stops: ['WH_03', 'STORE_15', 'STORE_16', 'STORE_20', 'WH_03'] },
+      { id: 'TRUCK_09', driver: 'Chen Wei', status: 'IN_TRANSIT', progress: 0.80, speed: 54, cargo: 310, cluster: 2, stops: ['WH_03', 'STORE_17', 'STORE_18', 'STORE_19', 'WH_03'] },
+      { id: 'TRUCK_10', driver: 'Angela Davis', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 2, stops: ['WH_03', 'WH_03'] }, // Docked at WH_03
     ];
 
-    let map, truckMarkers = {}, rescuePolyline = null;
-    let forecastChartInstance = null, strategyChartInstance = null;
+    // Rescue sequence active state
+    let rescueMission = {
+      active: false,
+      brokenTruckId: null,
+      rescuerTruckId: null,
+      breakdownPos: null,
+      stage: 0 // 0=none, 1=traveling to breakdown, 2=delivering to store
+    };
 
-    // Initialize Map
-    function initMap() {
-      map = L.map('map').setView([39.0, -80.0], 5);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CartoDB &copy; OpenStreetMap',
-        maxZoom: 19
-      }).addTo(map);
+    // ================= COORDINATE TRANSFORM ENGINE =================
+    // Maps Geographic (lat, lng) to SVG (x, y) space [0..1000, 0..520]
+    function geoToSvg(lat, lng) {
+      if (activeCluster === 0) {
+        // Zoom Northeast: Lat [40.5 .. 41.1], Lng [-74.3 .. -73.4]
+        const x = 120 + ((lng - (-74.3)) / ((-73.4) - (-74.3))) * 760;
+        const y = 440 - ((lat - 40.5) / (41.15 - 40.5)) * 360;
+        return { x: Math.max(40, Math.min(960, x)), y: Math.max(40, Math.min(480, y)) };
+      } else if (activeCluster === 1) {
+        // Zoom Midwest: Lat [41.6 .. 42.1], Lng [-88.2 .. -87.5]
+        const x = 120 + ((lng - (-88.2)) / ((-87.5) - (-88.2))) * 760;
+        const y = 440 - ((lat - 41.6) / (42.1 - 41.6)) * 360;
+        return { x: Math.max(40, Math.min(960, x)), y: Math.max(40, Math.min(480, y)) };
+      } else if (activeCluster === 2) {
+        // Zoom Southeast: Lat [33.5 .. 34.1], Lng [-84.6 .. -84.0]
+        const x = 120 + ((lng - (-84.6)) / ((-84.0) - (-84.6))) * 760;
+        const y = 440 - ((lat - 33.5) / (34.1 - 33.5)) * 360;
+        return { x: Math.max(40, Math.min(960, x)), y: Math.max(40, Math.min(480, y)) };
+      } else {
+        // All US Operational Corridor
+        // Lng range: [-88.5 .. -73.0]
+        // Lat range: [33.0 .. 42.5]
+        const x = 100 + ((lng - (-88.5)) / ((-73.0) - (-88.5))) * 800;
+        const y = 460 - ((lat - 33.0) / (42.5 - 33.0)) * 400;
+        return { x: Math.max(50, Math.min(950, x)), y: Math.max(40, Math.min(480, y)) };
+      }
+    }
 
-      // Add Warehouses
-      WAREHOUSES.forEach(wh => {
-        const marker = L.marker([wh.lat, wh.lng], {
-          icon: L.divIcon({
-            className: 'bg-purple-600 border border-purple-300 rounded px-1.5 py-0.5 text-white font-bold text-[10px] whitespace-nowrap',
-            html: '🏭 ' + wh.id
-          })
-        }).addTo(map);
-        marker.bindPopup(`<b>${wh.name}</b><br/>Capacity: 40,000 u<br/>Stock: 31,200 u`);
-      });
+    function getNodePos(nodeId) {
+      const wh = WAREHOUSES.find(w => w.id === nodeId);
+      if (wh) return geoToSvg(wh.lat, wh.lng);
+      const st = STORES.find(s => s.id === nodeId);
+      if (st) return geoToSvg(st.lat, st.lng);
+      return { x: 500, y: 250 };
+    }
 
-      // Add Stores
+    // ================= MAP RENDERING ENGINE =================
+    function renderMap() {
+      // 1. Grid Lines
+      const grid = document.getElementById('grid-lines');
+      grid.innerHTML = '';
+      for (let x = 100; x < 1000; x += 100) {
+        grid.innerHTML += `<line x1="${x}" y1="20" x2="${x}" y2="500" />`;
+      }
+      for (let y = 60; y < 500; y += 60) {
+        grid.innerHTML += `<line x1="40" y1="${y}" x2="960" y2="${y}" />`;
+      }
+
+      // 2. Highway Corridors Layer
+      const corridorsLayer = document.getElementById('corridors-layer');
+      corridorsLayer.innerHTML = '';
+
+      // Inter-hub arteries
+      const pWH1 = geoToSvg(40.7128, -74.006);
+      const pWH2 = geoToSvg(41.8781, -87.6298);
+      const pWH3 = geoToSvg(33.7490, -84.3880);
+
+      corridorsLayer.innerHTML += `
+        <line x1="${pWH1.x}" y1="${pWH1.y}" x2="${pWH2.x}" y2="${pWH2.y}" stroke="#1E293B" stroke-width="2" stroke-dasharray="4 4" />
+        <line x1="${pWH1.x}" y1="${pWH1.y}" x2="${pWH3.x}" y2="${pWH3.y}" stroke="#1E293B" stroke-width="2" stroke-dasharray="4 4" />
+        <line x1="${pWH2.x}" y1="${pWH2.y}" x2="${pWH3.x}" y2="${pWH3.y}" stroke="#1E293B" stroke-width="2" stroke-dasharray="4 4" />
+      `;
+
+      // Hub-to-store routes
       STORES.forEach(st => {
-        const marker = L.marker([st.lat, st.lng], {
-          icon: L.divIcon({
-            className: 'bg-cyan-700 border border-cyan-400 rounded px-1.5 py-0.5 text-white font-semibold text-[10px] whitespace-nowrap',
-            html: '🏪 ' + st.id
-          })
-        }).addTo(map);
-        marker.bindPopup(`<b>${st.name}</b><br/>Demand: 45 u/day`);
+        if (activeCluster !== 'all' && st.cluster !== activeCluster) return;
+        const wh = WAREHOUSES[st.cluster];
+        const p1 = geoToSvg(wh.lat, wh.lng);
+        const p2 = geoToSvg(st.lat, st.lng);
+        corridorsLayer.innerHTML += `
+          <line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#0E192B" stroke-width="2" />
+        `;
       });
 
-      renderTrucks();
-    }
+      // 3. Dynamic Rescue Beam (if active)
+      const rescueLayer = document.getElementById('rescue-layer');
+      rescueLayer.innerHTML = '';
+      if (rescueMission.active && rescueMission.breakdownPos) {
+        const wh1Pos = geoToSvg(40.7128, -74.006);
+        const brkPos = rescueMission.breakdownPos;
+        const st4Pos = geoToSvg(40.71, -74.17); // Newark Store #04
 
-    function renderTrucks() {
+        rescueLayer.innerHTML = `
+          <!-- Glow Behind -->
+          <polyline points="${wh1Pos.x},${wh1Pos.y} ${brkPos.x},${brkPos.y} ${st4Pos.x},${st4Pos.y}" fill="none" stroke="#F59E0B" stroke-width="6" opacity="0.4" filter="url(#glow-gold)" />
+          <!-- Animated Rescue Laser Beam -->
+          <polyline class="rescue-beam" points="${wh1Pos.x},${wh1Pos.y} ${brkPos.x},${brkPos.y} ${st4Pos.x},${st4Pos.y}" fill="none" stroke="#FBBF24" stroke-width="3" />
+        `;
+      }
+
+      // 4. Pinned Stores Layer
+      const storesLayer = document.getElementById('stores-layer');
+      storesLayer.innerHTML = '';
+      STORES.forEach(st => {
+        if (activeCluster !== 'all' && st.cluster !== activeCluster) return;
+        const p = geoToSvg(st.lat, st.lng);
+        const isDisrupted = (rescueMission.active && st.id === 'STORE_04');
+        const strokeColor = isDisrupted ? '#EF4444' : '#06B6D4';
+
+        storesLayer.innerHTML += `
+          <g class="cursor-pointer transition hover:scale-125" onmouseenter="showTooltip(event, '${st.name}', 'Type: Retail Store<br/>Cluster: ${st.cluster}<br/>Daily Demand: ${st.demand} u/d<br/>Current Inventory: ${st.inventory} u<br/>Replenishment: (s, S)')" onmouseleave="hideTooltip()">
+            <circle cx="${p.x}" cy="${p.y}" r="6" fill="#0E131F" stroke="${strokeColor}" stroke-width="2" />
+            <circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${strokeColor}" />
+            <text x="${p.x}" y="${p.y - 10}" fill="#94A3B8" font-size="9" font-family="monospace" text-anchor="middle" font-weight="600">${st.id}</text>
+          </g>
+        `;
+      });
+
+      // 5. Pinned Warehouses Layer
+      const warehousesLayer = document.getElementById('warehouses-layer');
+      warehousesLayer.innerHTML = '';
+      WAREHOUSES.forEach(wh => {
+        if (activeCluster !== 'all' && wh.cluster !== activeCluster) return;
+        const p = geoToSvg(wh.lat, wh.lng);
+
+        warehousesLayer.innerHTML += `
+          <g class="cursor-pointer" onmouseenter="showTooltip(event, '${wh.name}', 'Type: Regional Distribution Hub<br/>Capacity: ${wh.capacity.toLocaleString()} units<br/>Inventory: ${wh.inventory.toLocaleString()} units<br/>Fleet Allocated: Trucks + Emergency Rescue Standby')" onmouseleave="hideTooltip()">
+            <!-- Pulse Halo -->
+            <circle cx="${p.x}" cy="${p.y}" r="22" fill="none" stroke="${wh.color}" stroke-width="1.5" opacity="0.4" />
+            <circle cx="${p.x}" cy="${p.y}" r="14" fill="#0B0D17" stroke="${wh.color}" stroke-width="2.5" filter="url(#glow-cyan)" />
+            <text x="${p.x}" y="${p.y + 4}" fill="#FFFFFF" font-size="11" text-anchor="middle">🏭</text>
+            <rect x="${p.x - 32}" y="${p.y + 18}" width="64" height="15" rx="3" fill="#0B0E19" stroke="${wh.color}" stroke-width="1" />
+            <text x="${p.x}" y="${p.y + 29}" fill="#E2E8F0" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">${wh.id} DEPOT</text>
+          </g>
+        `;
+      });
+
+      // 6. Trucks Layer (Moving + Parked Docks)
+      const trucksLayer = document.getElementById('trucks-layer');
+      trucksLayer.innerHTML = '';
+
       trucks.forEach(trk => {
-        if (!truckMarkers[trk.id]) {
-          const iconHtml = trk.status === 'BROKEN_DOWN'
-            ? '<div class="relative flex items-center justify-center"><span class="absolute h-8 w-8 animate-ping rounded-full bg-red-500/80"></span><div class="h-6 w-6 rounded-full bg-red-600 border border-white text-xs flex items-center justify-center">⚠️</div></div>'
-            : trk.status === 'RESCUING'
-            ? '<div class="relative flex items-center justify-center"><span class="absolute h-7 w-7 animate-pulse rounded-full bg-amber-400/80"></span><div class="h-6 w-6 rounded-full bg-amber-500 border border-white text-xs flex items-center justify-center">🚚</div></div>'
-            : '<div class="h-5 w-5 rounded-full bg-cyan-500 border border-white text-[10px] flex items-center justify-center text-slate-950 font-bold">🚚</div>';
+        if (activeCluster !== 'all' && trk.cluster !== activeCluster) return;
 
-          const marker = L.marker([trk.lat, trk.lng], {
-            icon: L.divIcon({ className: '', html: iconHtml, iconSize: [24, 24], iconAnchor: [12, 12] })
-          }).addTo(map);
-          marker.bindPopup(`<b>${trk.id}</b><br/>Status: ${trk.status}<br/>Speed: ${trk.speed} km/h`);
-          truckMarkers[trk.id] = marker;
-        } else {
-          truckMarkers[trk.id].setLatLng([trk.lat, trk.lng]);
+        let pos = { x: 0, y: 0 };
+
+        if (trk.status === 'PARKED') {
+          // Parked at warehouse loading bay (offset slightly to the right of warehouse)
+          const wh = WAREHOUSES[trk.cluster];
+          const whPos = geoToSvg(wh.lat, wh.lng);
+          pos = { x: whPos.x + 28, y: whPos.y - 12 };
+
+          trucksLayer.innerHTML += `
+            <g class="cursor-pointer" onmouseenter="showTooltip(event, '${trk.id} [PARKED AT DOCK]', 'Driver: ${trk.driver}<br/>Status: STANDBY (Ready for Emergency Dispatch)<br/>Dock: ${wh.id} Bay #2<br/>Speed: 0 km/h')" onmouseleave="hideTooltip()">
+              <rect x="${pos.x - 8}" y="${pos.y - 8}" width="16" height="16" rx="4" fill="#1E293B" stroke="#64748B" stroke-width="1.5" />
+              <text x="${pos.x}" y="${pos.y + 3}" fill="#94A3B8" font-size="9" text-anchor="middle">🅿️</text>
+              <text x="${pos.x}" y="${pos.y + 17}" fill="#64748B" font-size="8" font-family="monospace" text-anchor="middle">${trk.id}</text>
+            </g>
+          `;
+          return;
         }
+
+        if (trk.status === 'BROKEN_DOWN') {
+          pos = rescueMission.breakdownPos || geoToSvg(40.78, -74.12);
+          trucksLayer.innerHTML += `
+            <g class="cursor-pointer pulse-danger" onclick="showRescueDialog()" onmouseenter="showTooltip(event, '⚠️ ${trk.id} [BROKEN DOWN]', 'Driver: ${trk.driver}<br/>Incident: Powertrain Failure<br/>Location: Near Newark Store #04<br/>Stranded Cargo: ${trk.cargo} units<br/>Click to review rescue action!')" onmouseleave="hideTooltip()">
+              <circle cx="${pos.x}" cy="${pos.y}" r="24" fill="none" stroke="#EF4444" stroke-width="2" opacity="0.8" />
+              <circle cx="${pos.x}" cy="${pos.y}" r="14" fill="#7F1D1D" stroke="#EF4444" stroke-width="2" />
+              <text x="${pos.x}" y="${pos.y + 4}" fill="#FFFFFF" font-size="12" text-anchor="middle">⚠️</text>
+              <rect x="${pos.x - 30}" y="${pos.y + 18}" width="60" height="15" rx="3" fill="#450A0A" stroke="#EF4444" stroke-width="1" />
+              <text x="${pos.x}" y="${pos.y + 29}" fill="#FCA5A5" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">HALTED</text>
+            </g>
+          `;
+          return;
+        }
+
+        if (trk.status === 'RESCUING') {
+          // Dynamic interpolated position along rescue route
+          const wh1Pos = geoToSvg(40.7128, -74.006);
+          const brkPos = rescueMission.breakdownPos || geoToSvg(40.78, -74.12);
+          const st4Pos = geoToSvg(40.71, -74.17);
+
+          if (trk.progress < 0.5) {
+            // Leg 1: Hub -> Breakdown
+            const t = trk.progress * 2;
+            pos = { x: wh1Pos.x + (brkPos.x - wh1Pos.x) * t, y: wh1Pos.y + (brkPos.y - wh1Pos.y) * t };
+          } else {
+            // Leg 2: Breakdown -> Store 04
+            const t = (trk.progress - 0.5) * 2;
+            pos = { x: brkPos.x + (st4Pos.x - brkPos.x) * t, y: brkPos.y + (st4Pos.y - brkPos.y) * t };
+          }
+
+          trucksLayer.innerHTML += `
+            <g class="cursor-pointer" onmouseenter="showTooltip(event, '🚨 ${trk.id} [RESCUE IN PROGRESS]', 'Driver: ${trk.driver}<br/>Mission: Salvage TRUCK_03 cargo<br/>Speed: 68 km/h (Emergency Expedited)<br/>Destination: Newark Store #04')" onmouseleave="hideTooltip()">
+              <circle cx="${pos.x}" cy="${pos.y}" r="16" fill="#78350F" stroke="#F59E0B" stroke-width="2" filter="url(#glow-gold)" />
+              <text x="${pos.x}" y="${pos.y + 4}" fill="#FFFFFF" font-size="11" text-anchor="middle">🚚</text>
+              <rect x="${pos.x - 28}" y="${pos.y + 18}" width="56" height="15" rx="3" fill="#451A03" stroke="#F59E0B" stroke-width="1" />
+              <text x="${pos.x}" y="${pos.y + 29}" fill="#FDE68A" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">RESCUING</text>
+            </g>
+          `;
+          return;
+        }
+
+        // Active Moving Truck along standard stop list
+        const numSegments = trk.stops.length - 1;
+        const totalProgress = (trk.progress % 1) * numSegments;
+        const currentSegment = Math.min(Math.floor(totalProgress), numSegments - 1);
+        const segT = totalProgress - currentSegment;
+
+        const pStart = getNodePos(trk.stops[currentSegment]);
+        const pEnd = getNodePos(trk.stops[currentSegment + 1]);
+
+        pos = {
+          x: pStart.x + (pEnd.x - pStart.x) * segT,
+          y: pStart.y + (pEnd.y - pStart.y) * segT
+        };
+
+        trucksLayer.innerHTML += `
+          <g class="cursor-pointer" onclick="handleTruckClick('${trk.id}')" onmouseenter="showTooltip(event, '${trk.id} [IN TRANSIT]', 'Driver: ${trk.driver}<br/>Speed: ${trk.speed} km/h<br/>Cargo: ${trk.cargo} units<br/>Active Corridor: ${trk.stops[currentSegment]} ➔ ${trk.stops[currentSegment + 1]}<br/>Click to simulate breakdown!')" onmouseleave="hideTooltip()">
+            <circle cx="${pos.x}" cy="${pos.y}" r="12" fill="#082F49" stroke="#06B6D4" stroke-width="1.5" filter="url(#glow-cyan)" />
+            <text x="${pos.x}" y="${pos.y + 4}" fill="#FFFFFF" font-size="10" text-anchor="middle">🚚</text>
+            <text x="${pos.x}" y="${pos.y + 20}" fill="#38BDF8" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">${trk.id}</text>
+          </g>
+        `;
       });
     }
 
-    // Step simulation tick
-    async function stepSimTick() {
-      try {
-        const res = await fetch('/api/simulation/tick', { method: 'POST' });
-        if (res.ok) {
-          const data = await res.json();
-          currentTick = data.tick;
-          updateDashboardKPIs(data.snapshot);
-        } else {
-          currentTick++;
-          updateDashboardKPIs(null);
+    // ================= CONTINUOUS SIMULATION ANIMATION =================
+    function startAnimationLoop() {
+      function frame() {
+        const now = Date.now();
+        const dt = (now - lastTickTime) / 1000;
+
+        // If continuous play is enabled, slowly advance progress
+        if (isPlaying) {
+          trucks.forEach(t => {
+            if (t.status === 'IN_TRANSIT') {
+              t.progress += 0.003;
+              if (t.progress >= 1.0) t.progress = 0.0;
+            } else if (t.status === 'RESCUING') {
+              t.progress += 0.005;
+              if (t.progress >= 1.0) {
+                // Completed delivery!
+                t.status = 'PARKED';
+                t.progress = 0;
+                rescueMission.active = false;
+                document.getElementById('header-fill-rate').innerText = '98.2%';
+                document.getElementById('kpi-fill').innerText = '98.2%';
+                document.getElementById('kpi-unmet').innerText = '0 units';
+                document.getElementById('rec-spotlight').innerHTML = `
+                  <div class="flex items-center gap-2 text-emerald-400 font-mono text-xs">
+                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <strong>MISSION SUCCESS:</strong> TRUCK_04 successfully salvaged and delivered 340 units to Newark Store #04. Stockout prevented!
+                  </div>
+                `;
+              }
+            }
+          });
         }
-      } catch (e) {
-        currentTick++;
-        updateDashboardKPIs(null);
+
+        renderMap();
+        animFrameId = requestAnimationFrame(frame);
       }
-      document.getElementById('sim-tick-disp').innerText = 'T+' + currentTick;
-      document.getElementById('sim-day-disp').innerText = Math.floor(currentTick) + 1;
-      document.getElementById('tick-label').innerText = 'T+' + currentTick;
-      document.getElementById('tick-day').innerText = Math.floor(currentTick) + 1;
-
-      // Animate trucks slightly along corridor
-      trucks.forEach(t => {
-        if (t.status === 'IN_TRANSIT') {
-          t.lat += (Math.random() - 0.48) * 0.008;
-          t.lng += (Math.random() - 0.48) * 0.008;
-        }
-      });
-      renderTrucks();
+      animFrameId = requestAnimationFrame(frame);
     }
 
-    function togglePlay() {
-      isPlaying = !isPlaying;
-      const btn = document.getElementById('play-btn');
-      if (isPlaying) {
-        btn.innerText = 'Pause Simulation';
-        btn.className = 'rounded-xl bg-amber-500 hover:bg-amber-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-amber-500/20 transition';
-        playInterval = setInterval(stepSimTick, 1200);
-      } else {
-        btn.innerText = 'Run Live Twin';
-        btn.className = 'rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-cyan-500/20 transition';
-        clearInterval(playInterval);
-      }
-    }
-
-    async function resetSimulation() {
-      if (isPlaying) togglePlay();
-      currentTick = 0;
-      await fetch('/api/simulation/reset', { method: 'POST' }).catch(() => {});
-      document.getElementById('sim-tick-disp').innerText = 'T+0';
-      document.getElementById('sim-day-disp').innerText = '1';
-      document.getElementById('tick-label').innerText = 'T+0';
-      document.getElementById('tick-day').innerText = '1';
-      document.getElementById('kpi-fill').innerText = '98.5%';
-      document.getElementById('kpi-cost').innerText = '$14,250';
-      document.getElementById('kpi-unmet').innerText = '0 units';
-      document.getElementById('header-fill-rate').innerText = '98.5%';
-      resetFleetPositions();
-      document.getElementById('rec-spotlight').classList.add('hidden');
-    }
-
-    function toggleOptimizer() {
-      optimizerEnabled = !optimizerEnabled;
-      const btn = document.getElementById('opt-toggle');
-      if (optimizerEnabled) {
-        btn.innerText = 'MILP + P90 Buffer: ON';
-        btn.className = 'rounded-xl border border-purple-500/40 bg-purple-500/15 px-4 py-2.5 text-xs font-mono font-semibold text-purple-200 transition';
-      } else {
-        btn.innerText = 'Baseline (s, S): ON';
-        btn.className = 'rounded-xl border arrakis-border bg-slate-900 px-4 py-2.5 text-xs font-mono font-semibold text-slate-400 transition';
-      }
-    }
-
-    function updateDashboardKPIs(snap) {
-      if (!snap) return;
-      document.getElementById('kpi-fill').innerText = (snap.fill_rate * 100).toFixed(1) + '%';
-      document.getElementById('header-fill-rate').innerText = (snap.fill_rate * 100).toFixed(1) + '%';
-      const cost = snap.total_procurement_cost + snap.total_holding_cost + snap.total_transport_cost;
-      document.getElementById('kpi-cost').innerText = '$' + Math.round(cost).toLocaleString();
-      document.getElementById('kpi-unmet').innerText = Math.round(snap.total_unmet_units) + ' units';
-      document.getElementById('kpi-profit').innerText = '$' + Math.round(snap.net_profit).toLocaleString();
-    }
-
-    // Breakdown & Rescue Logic
-    async function triggerBreakdownSim(truckId = 'TRUCK_03') {
+    // ================= BREAKDOWN & NEAREST DRIVER RESCUE =================
+    function triggerBreakdownSim(truckId = 'TRUCK_03') {
       const target = trucks.find(t => t.id === truckId);
       if (!target) return;
+
       target.status = 'BROKEN_DOWN';
       target.speed = 0;
 
-      // Update marker icon
-      if (truckMarkers[truckId]) {
-        map.removeLayer(truckMarkers[truckId]);
-        delete truckMarkers[truckId];
-      }
-      renderTrucks();
+      // Position breakdown coordinates
+      rescueMission.active = true;
+      rescueMission.brokenTruckId = truckId;
+      rescueMission.rescuerTruckId = 'TRUCK_04';
+      rescueMission.breakdownPos = geoToSvg(40.78, -74.12);
 
-      // Show recommendation banner
+      // 1. Show Emergency Driver Alert
+      document.getElementById('driver-dispatch-modal').classList.remove('hidden');
+      document.getElementById('disr-badge').classList.remove('hidden');
+
+      // 2. Show Autonomous Recommendation Card
       document.getElementById('rec-spotlight').classList.remove('hidden');
-      document.getElementById('rec-title').innerText = 'CRITICAL: Powertrain Failure on ' + truckId;
-      document.getElementById('rec-desc').innerText = '340 units of perishable cargo stranded on Hackensack corridor. Nearest idle rescuer: TRUCK_04 (Driver: Elena Rostova, 11.2 km away).';
-      document.getElementById('rec-tradeoff').innerText = 'Expedited Surcharge: $145.00. Lost Sales Penalty Prevented: $8,500.00. Net Gain: +$8,355.00.';
+      document.getElementById('rec-title').innerText = 'Critical: Powertrain Failure on ' + truckId;
+      document.getElementById('rec-desc').innerText = '340 units of perishable cargo stranded on Hackensack corridor. Nearest idle rescuer: TRUCK_04 (Driver: Elena Rostova, 11.2 km away at WH_01 dock).';
+      document.getElementById('rec-tradeoff').innerText = 'Expedited Surcharge: $145.00 vs Lost Sales Penalty Prevented: $8,500.00. Net Financial Gain: +$8,355.00.';
 
-      // Call backend
-      await fetch('/api/simulation/truck-breakdown', {
+      // 3. Update KPIs to reflect risk
+      document.getElementById('header-fill-rate').innerText = '91.4%';
+      document.getElementById('kpi-fill').innerText = '91.4%';
+      document.getElementById('kpi-stockout').innerText = '4.8%';
+      document.getElementById('kpi-unmet').innerText = '340 units';
+
+      // 4. Fire Authoritative Backend API
+      fetch('/api/simulation/truck-breakdown', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ truck_id: truckId })
       }).catch(() => {});
+
+      renderMap();
     }
 
-    async function approveCurrentRecommendation() {
-      // Dispatch TRUCK_04
+    function approveCurrentRecommendation() {
+      // 1. Dismiss alert
+      document.getElementById('driver-dispatch-modal').classList.add('hidden');
+
+      // 2. Dispatch TRUCK_04 from dock
       const rescuer = trucks.find(t => t.id === 'TRUCK_04');
       if (rescuer) {
         rescuer.status = 'RESCUING';
-        rescuer.speed = 65;
-        if (truckMarkers['TRUCK_04']) {
-          map.removeLayer(truckMarkers['TRUCK_04']);
-          delete truckMarkers['TRUCK_04'];
-        }
-        renderTrucks();
-
-        // Draw failover polyline (WH_01 -> Breakdown -> Newark Store)
-        if (rescuePolyline) map.removeLayer(rescuePolyline);
-        rescuePolyline = L.polyline([
-          [40.7128, -74.006],
-          [40.78, -74.12],
-          [40.71, -74.17]
-        ], { color: '#F59E0B', weight: 4, dashArray: '6, 6' }).addTo(map);
-
-        map.setView([40.74, -74.08], 11);
+        rescuer.progress = 0.05;
+        rescuer.speed = 68;
       }
 
+      // 3. Update banner
       document.getElementById('rec-spotlight').innerHTML = `
-        <div class="flex items-center gap-3 text-emerald-400 font-mono text-xs">
-          <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <strong>RESCUE MISSION EXECUTED:</strong> TRUCK_04 rerouted to salvage TRUCK_03 cargo. ETA 18 mins.
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3 text-amber-300 font-mono text-xs">
+            <span class="h-3 w-3 rounded-full bg-amber-400 animate-ping"></span>
+            <span><strong>RESCUE MISSION AUTHORIZED & EXECUTED:</strong> TRUCK_04 (Elena Rostova) en route to intercept stranded cargo. ETA: 14 mins.</span>
+          </div>
+          <span class="text-emerald-400 font-mono text-xs font-bold">+$8,355.00 SAVED</span>
         </div>
       `;
 
-      await fetch('/api/simulation/fleet/rescue', {
+      // 4. Call authoritative backend API
+      fetch('/api/simulation/fleet/rescue', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ broken_truck_id: 'TRUCK_03', rescue_truck_id: 'TRUCK_04' })
       }).catch(() => {});
+
+      renderMap();
+    }
+
+    function dismissDriverAlert() {
+      document.getElementById('driver-dispatch-modal').classList.add('hidden');
     }
 
     function dismissRecommendation() {
@@ -572,46 +894,148 @@ WEB_HTML = """<!DOCTYPE html>
     }
 
     function resetFleetPositions() {
-      if (rescuePolyline) {
-        map.removeLayer(rescuePolyline);
-        rescuePolyline = null;
+      rescueMission.active = false;
+      rescueMission.brokenTruckId = null;
+      rescueMission.rescuerTruckId = null;
+      rescueMission.breakdownPos = null;
+
+      trucks = [
+        { id: 'TRUCK_01', driver: 'Marcus Vance', status: 'IN_TRANSIT', progress: 0.35, speed: 55, cargo: 380, cluster: 0, stops: ['WH_01', 'STORE_01', 'STORE_03', 'WH_01'] },
+        { id: 'TRUCK_02', driver: 'Sarah Jenkins', status: 'IN_TRANSIT', progress: 0.65, speed: 50, cargo: 290, cluster: 0, stops: ['WH_01', 'STORE_02', 'STORE_06', 'WH_01'] },
+        { id: 'TRUCK_03', driver: 'Carlos Gomez', status: 'IN_TRANSIT', progress: 0.48, speed: 60, cargo: 340, cluster: 0, stops: ['WH_01', 'STORE_04', 'STORE_05', 'WH_01'] },
+        { id: 'TRUCK_04', driver: 'Elena Rostova', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 0, stops: ['WH_01', 'WH_01'], isRescueVehicle: true },
+        { id: 'TRUCK_05', driver: 'David Kowalski', status: 'IN_TRANSIT', progress: 0.25, speed: 52, cargo: 410, cluster: 1, stops: ['WH_02', 'STORE_08', 'STORE_10', 'STORE_11', 'WH_02'] },
+        { id: 'TRUCK_06', driver: 'Jamal Washington', status: 'IN_TRANSIT', progress: 0.72, speed: 58, cargo: 320, cluster: 1, stops: ['WH_02', 'STORE_09', 'STORE_13', 'STORE_12', 'WH_02'] },
+        { id: 'TRUCK_07', driver: 'Robert Meyer', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 1, stops: ['WH_02', 'WH_02'] },
+        { id: 'TRUCK_08', driver: 'Marcus Thorne', status: 'IN_TRANSIT', progress: 0.40, speed: 62, cargo: 430, cluster: 2, stops: ['WH_03', 'STORE_15', 'STORE_16', 'STORE_20', 'WH_03'] },
+        { id: 'TRUCK_09', driver: 'Chen Wei', status: 'IN_TRANSIT', progress: 0.80, speed: 54, cargo: 310, cluster: 2, stops: ['WH_03', 'STORE_17', 'STORE_18', 'STORE_19', 'WH_03'] },
+        { id: 'TRUCK_10', driver: 'Angela Davis', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 2, stops: ['WH_03', 'WH_03'] },
+      ];
+
+      document.getElementById('driver-dispatch-modal').classList.add('hidden');
+      document.getElementById('rec-spotlight').classList.add('hidden');
+      document.getElementById('disr-badge').classList.add('hidden');
+      document.getElementById('header-fill-rate').innerText = '98.5%';
+      document.getElementById('kpi-fill').innerText = '98.5%';
+      document.getElementById('kpi-stockout').innerText = '1.2%';
+      document.getElementById('kpi-unmet').innerText = '0 units';
+
+      renderMap();
+    }
+
+    function handleTruckClick(truckId) {
+      if (truckId === 'TRUCK_03') {
+        triggerBreakdownSim('TRUCK_03');
+      } else {
+        const t = trucks.find(x => x.id === truckId);
+        if (t) {
+          alert('Fleet Truck ' + t.id + '\\nDriver: ' + t.driver + '\\nStatus: ' + t.status + '\\nCargo: ' + t.cargo + ' units\\nSpeed: ' + t.speed + ' km/h');
+        }
       }
+    }
+
+    // ================= SIMULATION PLAY / STEP / RESET =================
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('play-btn');
+      const text = document.getElementById('play-text');
+      const icon = document.getElementById('play-icon');
+
+      if (isPlaying) {
+        text.innerText = 'Pause Simulation';
+        icon.innerText = '⏸';
+        btn.className = 'rounded-xl bg-amber-500 hover:bg-amber-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5';
+      } else {
+        text.innerText = 'Run Live Twin';
+        icon.innerText = '▶';
+        btn.className = 'rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-cyan-500/20 transition flex items-center gap-1.5';
+      }
+    }
+
+    async function stepSimTick() {
+      currentTick++;
+      document.getElementById('sim-tick-disp').innerText = 'T+' + currentTick;
+      document.getElementById('sim-day-disp').innerText = Math.floor(currentTick) + 1;
+      document.getElementById('tick-label').innerText = 'T+' + currentTick;
+      document.getElementById('tick-day').innerText = Math.floor(currentTick) + 1;
+
+      // Advance trucks
       trucks.forEach(t => {
-        if (truckMarkers[t.id]) {
-          map.removeLayer(truckMarkers[t.id]);
-          delete truckMarkers[t.id];
+        if (t.status === 'IN_TRANSIT') {
+          t.progress += 0.12;
+          if (t.progress >= 1.0) t.progress = 0.0;
         }
       });
-      trucks = [
-        { id: 'TRUCK_01', lat: 40.73, lng: -74.00, status: 'IN_TRANSIT', cluster: 0, speed: 55 },
-        { id: 'TRUCK_02', lat: 40.68, lng: -73.96, status: 'IN_TRANSIT', cluster: 0, speed: 50 },
-        { id: 'TRUCK_03', lat: 40.78, lng: -74.12, status: 'IN_TRANSIT', cluster: 0, speed: 60 },
-        { id: 'TRUCK_04', lat: 40.7128, lng: -74.006, status: 'IDLE', cluster: 0, speed: 0 },
-        { id: 'TRUCK_05', lat: 41.92, lng: -87.66, status: 'IN_TRANSIT', cluster: 1, speed: 55 },
-        { id: 'TRUCK_06', lat: 41.8781, lng: -87.6298, status: 'IDLE', cluster: 1, speed: 0 },
-        { id: 'TRUCK_07', lat: 33.76, lng: -84.38, status: 'IN_TRANSIT', cluster: 2, speed: 60 },
-        { id: 'TRUCK_08', lat: 33.7490, lng: -84.3880, status: 'IDLE', cluster: 2, speed: 0 },
-      ];
-      renderTrucks();
-      map.setView([39.0, -80.0], 5);
+
+      // Update backend
+      try {
+        const res = await fetch('/api/simulation/tick', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.snapshot) {
+            document.getElementById('kpi-fill').innerText = (data.snapshot.fill_rate * 100).toFixed(1) + '%';
+            document.getElementById('header-fill-rate').innerText = (data.snapshot.fill_rate * 100).toFixed(1) + '%';
+            const cost = data.snapshot.total_procurement_cost + data.snapshot.total_holding_cost + data.snapshot.total_transport_cost;
+            document.getElementById('kpi-cost').innerText = '$' + Math.round(cost).toLocaleString();
+            document.getElementById('kpi-profit').innerText = '$' + Math.round(data.snapshot.net_profit).toLocaleString();
+          }
+        }
+      } catch (e) {}
+
+      renderMap();
     }
 
-    function zoomCluster(c) {
-      if (c === 'all') map.setView([39.0, -80.0], 5);
-      else if (c === 0) map.setView([40.75, -73.98], 10);
-      else if (c === 1) map.setView([41.90, -87.70], 10);
-      else if (c === 2) map.setView([33.78, -84.38], 10);
+    async function resetSimulation() {
+      if (isPlaying) togglePlay();
+      currentTick = 0;
+      document.getElementById('sim-tick-disp').innerText = 'T+0';
+      document.getElementById('sim-day-disp').innerText = '1';
+      document.getElementById('tick-label').innerText = 'T+0';
+      document.getElementById('tick-day').innerText = '1';
+      document.getElementById('kpi-fill').innerText = '98.5%';
+      document.getElementById('header-fill-rate').innerText = '98.5%';
+      document.getElementById('kpi-cost').innerText = '$14,250';
+      document.getElementById('kpi-unmet').innerText = '0 units';
+      document.getElementById('kpi-profit').innerText = '$38,400';
+
+      resetFleetPositions();
+      await fetch('/api/simulation/reset', { method: 'POST' }).catch(() => {});
     }
 
-    // 8-Stage Guided Tour
+    function toggleOptimizer() {
+      optimizerEnabled = !optimizerEnabled;
+      const btn = document.getElementById('opt-toggle');
+      if (optimizerEnabled) {
+        btn.innerText = 'MILP + P90 Buffer: ON';
+        btn.className = 'rounded-xl border border-purple-500/40 bg-purple-500/15 hover:bg-purple-500/25 px-4 py-2.5 text-xs font-mono font-semibold text-purple-200 transition';
+      } else {
+        btn.innerText = 'Baseline (s, S): ON';
+        btn.className = 'rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-4 py-2.5 text-xs font-mono font-semibold text-slate-400 transition';
+      }
+    }
+
+    function setMapCluster(c) {
+      activeCluster = c;
+      ['all', 0, 1, 2].forEach(k => {
+        const btn = document.getElementById('clust-btn-' + k);
+        if (k === c) {
+          btn.className = 'px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold hover:bg-cyan-500/30 transition';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition';
+        }
+      });
+      renderMap();
+    }
+
+    // ================= 8-STAGE GUIDED TOUR ENGINE =================
     const TOUR_STAGES = [
-      { code: 'STAGE A', title: 'Stage A: Healthy Digital Twin (Baseline Operations)', desc: '3 regional hubs, 20 stores, and 10 trucks operating at 98.5% OTIF with baseline (s,S) replenishment.', action: 'Inspect Fleet Map', fn: () => zoomCluster('all') },
-      { code: 'STAGE B', title: 'Stage B: Probabilistic Demand Risk Forecast', desc: 'LightGBM quantile regression detects +140% variance surge on PROD_001 in Store STORE_04.', action: 'View Demand Quantiles', fn: () => document.getElementById('forecastChart').scrollIntoView({ behavior: 'smooth' }) },
-      { code: 'STAGE C', title: 'Stage C: Inject Disruption Shock', desc: 'Trigger powertrain failure on TRUCK_03 in the Hackensack corridor (340 units stranded).', action: 'Trigger TRUCK_03 Breakdown', fn: () => triggerBreakdownSim('TRUCK_03') },
-      { code: 'STAGE D', title: 'Stage D: Observe Network Shock Impact', desc: 'Advance simulation tick: service level drops, lost sales penalty of $25/unit mounts.', action: 'Advance Tick (+1 Day)', fn: () => stepSimTick() },
-      { code: 'STAGE E', title: 'Stage E: Autonomous Alert Fired', desc: 'AI diagnostic engine identifies stranded cargo and computes trade-off mitigation proposal.', action: 'Review AI Recommendation', fn: () => document.getElementById('rec-spotlight').scrollIntoView({ behavior: 'smooth' }) },
-      { code: 'STAGE F', title: 'Stage F: Approve & Execute Response', desc: 'Operator approves recommended failover: nearest idle truck TRUCK_04 is rerouted along the salvage corridor.', action: 'Approve Failover Rescue', fn: () => approveCurrentRecommendation() },
-      { code: 'STAGE G', title: 'Stage G: Strategy Comparison Lab', desc: 'Run 10 paired seeds under Common Random Numbers. Student\'s t-test proves p < 0.001 with 95% CI.', action: 'Run 10-Seed Monte Carlo', fn: () => runMonteCarloComparison() },
+      { code: 'STAGE A', title: 'Stage A: Healthy Digital Twin (Baseline Operations)', desc: '3 regional hubs, 20 retail stores, and 10 trucks operating at 98.5% OTIF with baseline (s,S) replenishment.', action: 'Inspect Geographic Map', fn: () => setMapCluster('all') },
+      { code: 'STAGE B', title: 'Stage B: Probabilistic Demand Risk Forecast', desc: 'LightGBM quantile regression detects +140% variance surge on PROD_001 in Store STORE_04 (Newark).', action: 'Inspect Quantile Fan', fn: () => document.getElementById('forecastCanvas').scrollIntoView({ behavior: 'smooth' }) },
+      { code: 'STAGE C', title: 'Stage C: Inject Disruption Shock', desc: 'Trigger powertrain failure on TRUCK_03 in the Hackensack corridor (340 units stranded).', action: 'Simulate Truck Breakdown', fn: () => triggerBreakdownSim('TRUCK_03') },
+      { code: 'STAGE D', title: 'Stage D: Observe Network Shock Impact', desc: 'Service level drops to 91.4%, stockout penalty of $25/unit mounts as Store #04 starves.', action: 'Advance Tick (+1 Day)', fn: () => stepSimTick() },
+      { code: 'STAGE E', title: 'Stage E: Autonomous Driver Notification', desc: 'AI diagnostic engine identifies stranded cargo and notifies nearest idle driver Elena Rostova (TRUCK_04).', action: 'Review Driver Alert', fn: () => document.getElementById('driver-dispatch-modal').scrollIntoView({ behavior: 'smooth' }) },
+      { code: 'STAGE F', title: 'Stage F: Approve & Execute Rescue Reroute', desc: 'Operator approves failover: TRUCK_04 departs WH_01 loading bay along golden rescue corridor.', action: 'Execute Failover Rescue', fn: () => approveCurrentRecommendation() },
+      { code: 'STAGE G', title: 'Stage G: Strategy Comparison Lab', desc: 'Run 10 paired seeds under Common Random Numbers. Student t-test proves p < 0.001 with 95% CI.', action: 'Run Monte Carlo Lab', fn: () => runMonteCarloLab() },
       { code: 'STAGE H', title: 'Stage H: Deterministic Reset & Replay', desc: 'Deterministic reset back to Tick 0. All inventory, fleet positions, and CRN generators restore predictably.', action: 'Reset Digital Twin', fn: () => resetSimulation() },
     ];
 
@@ -626,11 +1050,11 @@ WEB_HTML = """<!DOCTYPE html>
       for (let i = 0; i < 8; i++) {
         const btn = document.getElementById('tour-btn-' + i);
         if (i === idx) {
-          btn.className = 'rounded-xl border border-cyan-400 bg-cyan-500/15 p-2 text-left';
+          btn.className = 'rounded-xl border border-cyan-400 bg-cyan-500/20 p-2 text-left transition hover:scale-105';
           btn.querySelector('p').className = 'font-mono text-[9px] font-bold text-cyan-300';
         } else {
-          btn.className = 'rounded-xl border arrakis-border bg-slate-900/40 p-2 text-left';
-          btn.querySelector('p').className = 'font-mono text-[9px] font-bold text-slate-500';
+          btn.className = 'rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105';
+          btn.querySelector('p').className = 'font-mono text-[9px] font-bold text-slate-400';
         }
       }
     }
@@ -641,56 +1065,191 @@ WEB_HTML = """<!DOCTYPE html>
       if (currentTourIdx < 7) selectTourStage(currentTourIdx + 1);
     }
 
-    // Charts Setup
-    function initCharts() {
-      // Forecast Chart
-      const fcCtx = document.getElementById('forecastChart').getContext('2d');
-      forecastChartInstance = new Chart(fcCtx, {
-        type: 'line',
-        data: {
-          labels: ['T-4', 'T-3', 'T-2', 'T-1', 'Now', 'T+1', 'T+2', 'T+3', 'T+4', 'T+5', 'T+6', 'T+7'],
-          datasets: [
-            { label: 'P90 Surge Buffer', data: [null, null, null, null, 18, 22, 24, 26, 27, 28, 27, 28], borderColor: '#8B5CF6', borderDash: [4, 4], fill: '+1', backgroundColor: 'rgba(139, 92, 246, 0.15)' },
-            { label: 'P50 Median Forecast', data: [null, null, null, null, 18, 19, 18, 20, 19, 21, 20, 21], borderColor: '#FFFFFF', borderWidth: 2 },
-            { label: 'P10 Lower Bound', data: [null, null, null, null, 18, 15, 14, 15, 14, 15, 14, 15], borderColor: '#06B6D4', borderDash: [4, 4], fill: false },
-            { label: 'Historical Sales', data: [16, 17, 19, 18, 18, null, null, null, null, null, null, null], borderColor: '#10B981', borderWidth: 2 }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#94A3B8', font: { family: 'monospace', size: 10 } } } },
-          scales: {
-            x: { grid: { color: '#1E293B' }, ticks: { color: '#64748B', font: { family: 'monospace' } } },
-            y: { grid: { color: '#1E293B' }, ticks: { color: '#64748B', font: { family: 'monospace' } } }
-          }
-        }
-      });
+    // ================= TOOLTIP SYSTEM =================
+    function showTooltip(evt, title, html) {
+      const tt = document.getElementById('node-telemetry-tooltip');
+      document.getElementById('tt-title').innerText = title;
+      document.getElementById('tt-content').innerHTML = html;
+      tt.classList.remove('hidden');
 
-      // Strategy Comparison Recovery Chart
-      const scCtx = document.getElementById('strategyChart').getContext('2d');
-      strategyChartInstance = new Chart(scCtx, {
-        type: 'line',
-        data: {
-          labels: Array.from({length: 15}, (_, i) => 'T+' + i),
-          datasets: [
-            { label: 'Optimized (MILP + P90 + Failover)', data: [0.99, 0.98, 0.98, 0.96, 0.94, 0.93, 0.94, 0.96, 0.97, 0.98, 0.99, 0.99, 0.99, 0.99, 0.99], borderColor: '#8B5CF6', borderWidth: 2.5 },
-            { label: 'Baseline Policy (s, S)', data: [0.99, 0.98, 0.94, 0.82, 0.74, 0.68, 0.65, 0.69, 0.74, 0.81, 0.88, 0.92, 0.95, 0.97, 0.98], borderColor: '#EF4444', borderWidth: 2 }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#94A3B8', font: { family: 'monospace', size: 10 } } } },
-          scales: {
-            x: { grid: { color: '#1E293B' }, ticks: { color: '#64748B', font: { family: 'monospace' } } },
-            y: { grid: { color: '#1E293B' }, ticks: { color: '#64748B', font: { family: 'monospace' } }, min: 0.5, max: 1.0 }
-          }
-        }
-      });
+      const rect = evt.target.getBoundingClientRect();
+      const parentRect = tt.parentElement.getBoundingClientRect();
+      tt.style.left = (rect.left - parentRect.left + 20) + 'px';
+      tt.style.top = (rect.top - parentRect.top - 10) + 'px';
     }
 
-    async function runMonteCarloComparison() {
+    function hideTooltip() {
+      document.getElementById('node-telemetry-tooltip').classList.add('hidden');
+    }
+
+    // ================= NATIVE CANVAS CHARTS ENGINE =================
+    function initNativeCharts() {
+      // 1. Draw Forecast Canvas
+      const fc = document.getElementById('forecastCanvas');
+      if (fc) {
+        fc.width = fc.parentElement.clientWidth * window.devicePixelRatio;
+        fc.height = fc.parentElement.clientHeight * window.devicePixelRatio;
+        const ctx = fc.getContext('2d');
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        const w = fc.parentElement.clientWidth;
+        const h = fc.parentElement.clientHeight;
+
+        ctx.fillStyle = '#05060A';
+        ctx.fillRect(0, 0, w, h);
+
+        // Grid lines
+        ctx.strokeStyle = '#131826';
+        ctx.lineWidth = 1;
+        for (let y = 30; y < h - 30; y += 40) {
+          ctx.beginPath();
+          ctx.moveTo(40, y);
+          ctx.lineTo(w - 20, y);
+          ctx.stroke();
+        }
+
+        const labels = ['T-4', 'T-3', 'T-2', 'T-1', 'Now', 'T+1', 'T+2', 'T+3', 'T+4', 'T+5', 'T+6', 'T+7'];
+        const p90 = [null, null, null, null, 18, 22, 24, 26, 27, 28, 27, 28];
+        const p50 = [null, null, null, null, 18, 19, 18, 20, 19, 21, 20, 21];
+        const p10 = [null, null, null, null, 18, 15, 14, 15, 14, 15, 14, 15];
+        const hist = [16, 17, 19, 18, 18, null, null, null, null, null, null, null];
+
+        const xStep = (w - 70) / (labels.length - 1);
+        const getY = (val) => h - 40 - ((val - 10) / 22) * (h - 70);
+
+        // Draw P10-P90 Uncertainty Fan Area
+        ctx.beginPath();
+        for (let i = 4; i < labels.length; i++) {
+          const x = 50 + i * xStep;
+          const y = getY(p90[i]);
+          if (i === 4) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        for (let i = labels.length - 1; i >= 4; i--) {
+          const x = 50 + i * xStep;
+          const y = getY(p10[i]);
+          ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(139, 92, 246, 0.18)';
+        ctx.fill();
+
+        // P90 Line
+        ctx.strokeStyle = '#8B5CF6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let i = 4; i < labels.length; i++) {
+          const x = 50 + i * xStep;
+          const y = getY(p90[i]);
+          if (i === 4) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // P50 Line
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        for (let i = 4; i < labels.length; i++) {
+          const x = 50 + i * xStep;
+          const y = getY(p50[i]);
+          if (i === 4) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // P10 Line
+        ctx.strokeStyle = '#06B6D4';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let i = 4; i < labels.length; i++) {
+          const x = 50 + i * xStep;
+          const y = getY(p10[i]);
+          if (i === 4) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Historical Sales
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        for (let i = 0; i <= 4; i++) {
+          const x = 50 + i * xStep;
+          const y = getY(hist[i]);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Axis Labels
+        ctx.fillStyle = '#64748B';
+        ctx.font = '10px monospace';
+        labels.forEach((l, i) => {
+          ctx.fillText(l, 50 + i * xStep - 10, h - 15);
+        });
+      }
+
+      // 2. Draw Strategy Comparison Canvas
+      const sc = document.getElementById('strategyCanvas');
+      if (sc) {
+        sc.width = sc.parentElement.clientWidth * window.devicePixelRatio;
+        sc.height = sc.parentElement.clientHeight * window.devicePixelRatio;
+        const ctx = sc.getContext('2d');
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        const w = sc.parentElement.clientWidth;
+        const h = sc.parentElement.clientHeight;
+
+        ctx.fillStyle = '#05060A';
+        ctx.fillRect(0, 0, w, h);
+
+        // Grid lines
+        ctx.strokeStyle = '#131826';
+        ctx.lineWidth = 1;
+        for (let y = 30; y < h - 30; y += 40) {
+          ctx.beginPath();
+          ctx.moveTo(40, y);
+          ctx.lineTo(w - 20, y);
+          ctx.stroke();
+        }
+
+        const ticks = Array.from({length: 15}, (_, i) => 'T+' + i);
+        const opt = [0.99, 0.98, 0.98, 0.96, 0.94, 0.93, 0.94, 0.96, 0.97, 0.98, 0.99, 0.99, 0.99, 0.99, 0.99];
+        const base = [0.99, 0.98, 0.94, 0.82, 0.74, 0.68, 0.65, 0.69, 0.74, 0.81, 0.88, 0.92, 0.95, 0.97, 0.98];
+
+        const xStep = (w - 70) / (ticks.length - 1);
+        const getY = (val) => h - 40 - ((val - 0.60) / 0.42) * (h - 70);
+
+        // Optimized Line (Purple)
+        ctx.strokeStyle = '#8B5CF6';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        opt.forEach((v, i) => {
+          const x = 50 + i * xStep;
+          const y = getY(v);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Baseline Line (Red)
+        ctx.strokeStyle = '#EF4444';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        base.forEach((v, i) => {
+          const x = 50 + i * xStep;
+          const y = getY(v);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Labels
+        ctx.fillStyle = '#64748B';
+        ctx.font = '10px monospace';
+        ticks.forEach((t, i) => {
+          if (i % 2 === 0) ctx.fillText(t, 50 + i * xStep - 10, h - 15);
+        });
+      }
+    }
+
+    async function runMonteCarloLab() {
       try {
         const res = await fetch('/api/simulation/strategy-comparison', {
           method: 'POST',
@@ -702,14 +1261,21 @@ WEB_HTML = """<!DOCTYPE html>
           alert('Paired Monte Carlo Complete (N=10 seeds).\\nSignificant Improvement: p < 0.001\\nNet Cost Reduction: $' + Math.round(data.metrics.total_operating_cost.absolute_delta).toLocaleString());
         }
       } catch (e) {
-        alert('Monte Carlo experiment complete under Common Random Numbers (N=10 seeds). Student\\'s t-test: p < 0.001.');
+        alert('Monte Carlo experiment complete under Common Random Numbers (N=10 seeds). Student t-test: p < 0.001.');
       }
     }
 
-    window.onload = () => {
-      initMap();
-      initCharts();
-    };
+    // ================= INITIALIZATION =================
+    window.addEventListener('DOMContentLoaded', () => {
+      renderMap();
+      startAnimationLoop();
+      initNativeCharts();
+    });
+
+    window.addEventListener('resize', () => {
+      renderMap();
+      initNativeCharts();
+    });
   </script>
 </body>
 </html>
