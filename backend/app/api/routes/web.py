@@ -1,7 +1,7 @@
 """
 backend/app/api/routes/web.py
 Serves the complete interactive NEXUS Arrakis digital twin web application directly from FastAPI at /web and /app.
-Zero external npm/node dependencies required. Self-contained vector map and high-DPI canvas charts.
+Zero external npm/node dependencies required. Self-contained vector map, shopkeeper portal, warehouse scenarios, and high-DPI canvas charts.
 """
 
 from fastapi import APIRouter
@@ -20,7 +20,7 @@ WEB_HTML = r"""<!DOCTYPE html>
   <style>
     :root {
       --bg-dark: #07080C;
-      --card-bg: rgba(14, 18, 27, 0.88);
+      --card-bg: rgba(14, 18, 27, 0.90);
       --card-border: rgba(255, 255, 255, 0.09);
       --accent-cyan: #06B6D4;
       --accent-gold: #F59E0B;
@@ -59,6 +59,10 @@ WEB_HTML = r"""<!DOCTYPE html>
       stroke-dasharray: 6 6;
       animation: dashMove 1.5s linear infinite;
     }
+    .delivery-beam {
+      stroke-dasharray: 5 4;
+      animation: dashMove 0.8s linear infinite;
+    }
     @keyframes dashMove {
       to { stroke-dashoffset: -28; }
     }
@@ -81,10 +85,10 @@ WEB_HTML = r"""<!DOCTYPE html>
           <div class="flex items-center gap-2">
             <span class="text-sm font-black tracking-wider text-white">NEXUS</span>
             <span class="font-mono text-[9px] uppercase tracking-widest text-cyan-400 font-bold px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
-              SCM DIGITAL TWIN // ARRAKIS
+              SUPPLY CHAIN DIGITAL TWIN
             </span>
           </div>
-          <p class="font-mono text-[10px] text-slate-400">Autonomous Multi-Echelon Replenishment, VRP & Disruption Failover</p>
+          <p class="font-mono text-[10px] text-slate-400">Shopkeeper Order Desk • Warehouse SKU Scenarios • Dynamic Shortest Path VRP</p>
         </div>
       </div>
 
@@ -118,113 +122,46 @@ WEB_HTML = r"""<!DOCTYPE html>
     </div>
   </header>
 
-  <!-- ================= MAIN DASHBOARD CONTAINER ================= -->
-  <main class="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6">
-
-    <!-- 1. GUIDED JUDGING DEMO BAR (8-STAGE PIPELINE) -->
-    <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
-      <div class="flex items-center justify-between border-b arrakis-border pb-3">
-        <div class="flex items-center gap-2">
-          <span class="font-mono text-[10px] uppercase tracking-widest text-cyan-400 font-bold">
-            GUIDED JUDGING DEMO // 8-STAGE END-TO-END PIPELINE
-          </span>
-          <span class="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono text-slate-300" id="tour-step-badge">
-            Stage 1 of 8: STAGE A
-          </span>
-        </div>
-        <span class="font-mono text-[10px] text-slate-400 hidden sm:inline">[Deterministic Simulation Loop]</span>
-      </div>
-
-      <!-- 8 Stage Step Buttons -->
-      <div class="grid grid-cols-4 sm:grid-cols-8 gap-2">
-        <button onclick="selectTourStage(0)" id="tour-btn-0" class="rounded-xl border border-cyan-400 bg-cyan-500/20 p-2 text-left transition hover:scale-105">
-          <p class="font-mono text-[9px] font-bold text-cyan-300">STAGE A</p>
-          <p class="text-[11px] font-semibold text-white truncate">Healthy Twin</p>
-        </button>
-        <button onclick="selectTourStage(1)" id="tour-btn-1" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
-          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE B</p>
-          <p class="text-[11px] font-semibold text-slate-300 truncate">Occasion Surge</p>
-        </button>
-        <button onclick="selectTourStage(2)" id="tour-btn-2" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
-          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE C</p>
-          <p class="text-[11px] font-semibold text-slate-300 truncate">Transshipment</p>
-        </button>
-        <button onclick="selectTourStage(3)" id="tour-btn-3" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
-          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE D</p>
-          <p class="text-[11px] font-semibold text-slate-300 truncate">Any Breakdown</p>
-        </button>
-        <button onclick="selectTourStage(4)" id="tour-btn-4" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
-          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE E</p>
-          <p class="text-[11px] font-semibold text-slate-300 truncate">Nearest Rescuer</p>
-        </button>
-        <button onclick="selectTourStage(5)" id="tour-btn-5" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
-          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE F</p>
-          <p class="text-[11px] font-semibold text-slate-300 truncate">Store Orders</p>
-        </button>
-        <button onclick="selectTourStage(6)" id="tour-btn-6" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
-          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE G</p>
-          <p class="text-[11px] font-semibold text-slate-300 truncate">Strategy Lab</p>
-        </button>
-        <button onclick="selectTourStage(7)" id="tour-btn-7" class="rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105">
-          <p class="font-mono text-[9px] font-bold text-slate-400">STAGE H</p>
-          <p class="text-[11px] font-semibold text-slate-300 truncate">Reset & Replay</p>
-        </button>
-      </div>
-
-      <!-- Stage Action Banner -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border arrakis-border bg-slate-900/70 p-4">
-        <div>
-          <h4 id="tour-title" class="text-sm font-bold text-white flex items-center gap-2">
-            <span>Stage A: Healthy Digital Twin (Baseline Operations)</span>
-          </h4>
-          <p id="tour-desc" class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            3 regional distribution hubs, 20 retail stores, and 10 fleet vehicles operating at 98.5% OTIF service level with (s,S) replenishment policies.
-          </p>
-        </div>
-        <button id="tour-action-btn" onclick="executeCurrentTourAction()" class="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition shrink-0">
-          Inspect Geographic Map
-        </button>
-      </div>
-    </div>
-
-    <!-- 2. SIMULATION CONTROLS & CLOCK BAR -->
-    <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-xl bg-cyan-500/10 px-4 py-2 border border-cyan-500/25">
-          <span class="text-[10px] uppercase font-mono tracking-wider text-slate-400">Simulation Clock</span>
-          <p id="sim-tick-disp" class="font-mono text-2xl font-bold text-cyan-400">T+0</p>
-        </div>
-        <div class="text-xs">
-          <p class="font-semibold text-white">Day <span id="sim-day-disp">1</span> of 30 Operations</p>
-          <p class="font-mono text-[10px] text-slate-400">Canonical 9-Step Discrete-Event Tick Loop</p>
-        </div>
-      </div>
-
-      <!-- Playback Buttons -->
+  <!-- ================= WORKSPACE ROLE NAVIGATION TABS ================= -->
+  <div class="border-b arrakis-border bg-slate-950/80 px-4 sm:px-6 sticky top-16 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto py-2.5 gap-2 text-xs font-mono">
       <div class="flex items-center gap-2">
-        <button id="play-btn" onclick="togglePlay()" class="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-cyan-500/20 transition flex items-center gap-1.5">
-          <span id="play-icon">▶</span> <span id="play-text">Run Live Twin</span>
+        <button onclick="switchWorkspaceView('map')" id="tab-btn-map" class="px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 transition flex items-center gap-2 shadow-sm">
+          <span>🗺️</span> Digital Twin Map & Shortest Path VRP
         </button>
-        <button onclick="stepSimTick()" class="rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-200 transition">
+        <button onclick="switchWorkspaceView('shopkeeper')" id="tab-btn-shopkeeper" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 hover:text-white border arrakis-border transition flex items-center gap-2">
+          <span>🏬</span> Shopkeeper Order Desk ("Only Order Product")
+        </button>
+        <button onclick="switchWorkspaceView('warehouse')" id="tab-btn-warehouse" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 hover:text-white border arrakis-border transition flex items-center gap-2">
+          <span>🏭</span> Warehouse SKU Assortment & Scenarios
+        </button>
+        <button onclick="switchWorkspaceView('transship')" id="tab-btn-transship" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 hover:text-white border arrakis-border transition flex items-center gap-2">
+          <span>🔄</span> Inter-Warehouse Transshipment
+        </button>
+      </div>
+
+      <!-- Route Path Toggle & Simulation Play Controls -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="routes-toggle-btn" onclick="toggleAllRoutes()" class="rounded-xl border border-cyan-500/40 bg-cyan-500/15 hover:bg-cyan-500/25 px-3 py-1.5 text-xs font-mono font-semibold text-cyan-300 transition">
+          🛣️ Paths: ON
+        </button>
+        <button id="play-btn" onclick="togglePlay()" class="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-4 py-1.5 font-bold text-xs text-slate-950 transition flex items-center gap-1">
+          <span id="play-icon">▶</span> <span id="play-text">Run Twin</span>
+        </button>
+        <button onclick="stepSimTick()" class="rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-200 transition">
           Step (+1d)
         </button>
-        <button onclick="resetSimulation()" class="rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-400 hover:text-white transition">
+        <button onclick="resetSimulation()" class="rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition">
           Reset
         </button>
       </div>
-
-      <!-- Route Path Toggle & Policy -->
-      <div class="flex items-center gap-2">
-        <button id="routes-toggle-btn" onclick="toggleAllRoutes()" class="rounded-xl border border-cyan-500/40 bg-cyan-500/15 hover:bg-cyan-500/25 px-3.5 py-2.5 text-xs font-mono font-semibold text-cyan-300 transition">
-          🛣️ All Truck Paths: ON
-        </button>
-        <button id="opt-toggle" onclick="toggleOptimizer()" class="rounded-xl border border-purple-500/40 bg-purple-500/15 hover:bg-purple-500/25 px-3.5 py-2.5 text-xs font-mono font-semibold text-purple-200 transition">
-          MILP + P90 Buffer: ON
-        </button>
-      </div>
     </div>
+  </div>
 
-    <!-- 3. KPI METRICS TELEMETRY GRID -->
+  <!-- ================= MAIN DASHBOARD CONTAINER ================= -->
+  <main class="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6">
+
+    <!-- KPI METRICS TELEMETRY GRID -->
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
       <div class="glass-card rounded-2xl p-4">
         <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">OTIF Fill Rate</span>
@@ -253,7 +190,7 @@ WEB_HTML = r"""<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- 4. HIGH PRIORITY DRIVER DISPATCH ALERT (EMERGENCY TOAST) -->
+    <!-- NOTIFICATION & ALERT TOASTS -->
     <div id="driver-dispatch-modal" class="hidden rounded-2xl border-2 border-red-500/80 bg-red-950/90 p-5 shadow-2xl shadow-red-900/50 backdrop-blur-lg">
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="flex items-start gap-3">
@@ -263,15 +200,15 @@ WEB_HTML = r"""<!DOCTYPE html>
           <div>
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 rounded bg-red-500 text-[10px] font-mono font-black text-white">
-                DYNAMIC NEAREST-NEIGHBOR DISPATCH
+                DYNAMIC SHORTEST-PATH RESCUE DISPATCH
               </span>
               <span class="font-mono text-xs text-red-300" id="alert-incident-id">INCIDENT ID: #INC-7809-BRK</span>
             </div>
             <h3 class="text-base font-bold text-white mt-1" id="alert-headline">
-              Truck #03 Breakdown Detected
+              Truck Breakdown Detected
             </h3>
             <p class="text-xs text-red-200 mt-0.5 leading-relaxed" id="alert-driver-desc">
-              <strong>Nearest Available Unit Identified:</strong> Calculating real-time distance across all moving & idle fleet vehicles...
+              <strong>Shortest Path Optimization:</strong> Calculating nearest candidate vehicle and minimum cost failover route...
             </p>
           </div>
         </div>
@@ -286,287 +223,497 @@ WEB_HTML = r"""<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- 5. INBOUND SHIPMENT & WAREHOUSE ARRIVAL BANNER -->
     <div id="inbound-arrival-toast" class="hidden rounded-2xl border border-emerald-500/50 bg-emerald-950/80 p-4 backdrop-blur-md">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="text-2xl animate-spin">📦</span>
           <div>
-            <h4 class="text-xs font-bold font-mono text-emerald-300 uppercase tracking-wider" id="inbound-title">Inbound Shipment Arrived at Hub</h4>
-            <p class="text-xs text-slate-200" id="inbound-desc">Transfer of 2,500 units successfully unloaded at WH_01 Depot loading bay.</p>
+            <h4 class="text-xs font-bold font-mono text-emerald-300 uppercase tracking-wider" id="inbound-title">Inbound Shipment Arrived</h4>
+            <p class="text-xs text-slate-200" id="inbound-desc">Transfer successfully unloaded and inventory credited.</p>
           </div>
         </div>
-        <span class="text-xs font-mono font-bold text-emerald-400" id="inbound-stock-delta">+2,500 Units Accrued</span>
+        <span class="text-xs font-mono font-bold text-emerald-400" id="inbound-stock-delta">+2,500 Units</span>
       </div>
     </div>
 
-    <!-- 6. GEOGRAPHIC FLEET ROUTING & DYNAMIC FAILOVER MAP -->
-    <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b arrakis-border pb-3">
-        <div>
-          <div class="flex items-center gap-2">
-            <h3 class="text-sm font-bold text-white">Geographic Fleet Routing & Dynamic Failover Map</h3>
-            <span class="rounded bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 font-mono text-[9px] text-cyan-300">
-              [Spatially Distributed Vector Engine • 3 Hubs • 20 Stores • 10 Trucks]
-            </span>
+    <!-- ================= VIEW 1: MAP & SHORTEST PATH VRP VIEW ================= -->
+    <div id="view-map" class="space-y-4">
+      <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b arrakis-border pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-bold text-white">Geographic Fleet Routing & Dynamic Shortest Path VRP</h3>
+              <span class="rounded bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 font-mono text-[9px] text-cyan-300">
+                [Cost Optimized • Distance Minimized • Dynamic Nearest Failover]
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Live VRP engine computes the shortest path between warehouses, retail stores, and emergency breakdown sites
+            </p>
           </div>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Full visible truck path corridors, dynamic nearest-neighbor rescue assignment, and inter-warehouse transshipment transit
-          </p>
+
+          <div class="flex items-center gap-2">
+            <!-- Breakdown Any Truck Selector -->
+            <div class="flex items-center gap-1.5 bg-slate-900 border arrakis-border rounded-xl px-2.5 py-1">
+              <span class="text-[10px] font-mono text-slate-400">Inject Failure:</span>
+              <select id="truck-fail-select" class="bg-transparent text-xs text-red-300 font-mono focus:outline-none">
+                <option value="TRUCK_03" class="bg-slate-900">TRUCK_03 (Carlos Gomez)</option>
+                <option value="TRUCK_01" class="bg-slate-900">TRUCK_01 (Marcus Vance)</option>
+                <option value="TRUCK_05" class="bg-slate-900">TRUCK_05 (David Kowalski)</option>
+                <option value="TRUCK_08" class="bg-slate-900">TRUCK_08 (Marcus Thorne)</option>
+              </select>
+            </div>
+            <button onclick="triggerSelectedTruckBreakdown()" id="brk-btn" class="rounded-xl border border-red-500/50 bg-red-500/20 hover:bg-red-500/30 px-3.5 py-2 text-xs font-bold text-red-300 transition flex items-center gap-1.5 shadow-md shadow-red-950">
+              <span>⚠️</span> Break Down Truck
+            </button>
+            <button onclick="resetFleetPositions()" class="rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-300 transition">
+              Reset Fleet
+            </button>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <!-- Breakdown Any Truck Selector -->
-          <div class="flex items-center gap-1.5 bg-slate-900 border arrakis-border rounded-xl px-2 py-1">
-            <span class="text-[10px] font-mono text-slate-400">Shock:</span>
-            <select id="truck-fail-select" class="bg-transparent text-xs text-red-300 font-mono focus:outline-none">
-              <option value="TRUCK_03" class="bg-slate-900">TRUCK_03 (Carlos Gomez)</option>
-              <option value="TRUCK_01" class="bg-slate-900">TRUCK_01 (Marcus Vance)</option>
-              <option value="TRUCK_05" class="bg-slate-900">TRUCK_05 (David Kowalski)</option>
-              <option value="TRUCK_08" class="bg-slate-900">TRUCK_08 (Marcus Thorne)</option>
+        <!-- MAP CONTAINER -->
+        <div class="relative w-full h-[520px] rounded-xl overflow-hidden border arrakis-border bg-[#05060A]">
+          <svg id="vector-map" class="w-full h-full select-none" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <filter id="glow-gold" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <filter id="glow-red" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <filter id="glow-emerald" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <!-- Regional Halos -->
+              <radialGradient id="grad-wh1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.25" />
+                <stop offset="70%" stop-color="#8B5CF6" stop-opacity="0.08" />
+                <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="grad-wh2" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.25" />
+                <stop offset="70%" stop-color="#06B6D4" stop-opacity="0.08" />
+                <stop offset="100%" stop-color="#06B6D4" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="grad-wh3" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#10B981" stop-opacity="0.25" />
+                <stop offset="70%" stop-color="#10B981" stop-opacity="0.08" />
+                <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+
+            <!-- Coordinate Grid -->
+            <g id="grid-lines" stroke="#101524" stroke-width="1" stroke-dasharray="3 4"></g>
+
+            <!-- Regional Halos -->
+            <circle cx="780" cy="160" r="160" fill="url(#grad-wh1)" />
+            <circle cx="240" cy="160" r="160" fill="url(#grad-wh2)" />
+            <circle cx="520" cy="370" r="160" fill="url(#grad-wh3)" />
+
+            <!-- Regional Labels -->
+            <text x="780" y="325" fill="#8B5CF6" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">NORTHEAST REGION (NYC / NJ)</text>
+            <text x="240" y="325" fill="#06B6D4" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">MIDWEST REGION (CHICAGO)</text>
+            <text x="520" y="505" fill="#10B981" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">SOUTHEAST REGION (ATLANTA)</text>
+
+            <!-- Highway Corridors Layer -->
+            <g id="corridors-layer"></g>
+
+            <!-- Dynamic Dedicated Truck Paths (Shortest Route Corridors) -->
+            <g id="truck-paths-layer"></g>
+
+            <!-- Inter-Warehouse Transshipment Laser -->
+            <g id="transship-layer"></g>
+
+            <!-- Dynamic Shopkeeper Delivery Path -->
+            <g id="shopkeeper-delivery-layer"></g>
+
+            <!-- Dynamic Shortest-Path Rescue Laser -->
+            <g id="rescue-layer"></g>
+
+            <!-- Stores Layer -->
+            <g id="stores-layer"></g>
+
+            <!-- Warehouses Layer -->
+            <g id="warehouses-layer"></g>
+
+            <!-- Trucks Layer -->
+            <g id="trucks-layer"></g>
+          </svg>
+
+          <!-- Floating Node Telemetry Modal -->
+          <div id="node-telemetry-tooltip" class="absolute hidden z-30 pointer-events-none rounded-xl border border-cyan-500/40 bg-slate-950/95 p-3 shadow-2xl text-xs font-mono backdrop-blur-md max-w-xs">
+            <p id="tt-title" class="font-bold text-white text-sm">Node Info</p>
+            <div id="tt-content" class="mt-1 text-slate-300 space-y-0.5 text-[11px]"></div>
+          </div>
+        </div>
+
+        <!-- Legend and Camera Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400 pt-1">
+          <div class="flex items-center gap-2">
+            <span class="text-slate-500">ZOOM:</span>
+            <button onclick="setMapCluster('all')" id="clust-btn-all" class="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold hover:bg-cyan-500/30 transition">
+              All (Full Network)
+            </button>
+            <button onclick="setMapCluster(0)" id="clust-btn-0" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
+              Northeast (NYC)
+            </button>
+            <button onclick="setMapCluster(1)" id="clust-btn-1" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
+              Midwest (CHI)
+            </button>
+            <button onclick="setMapCluster(2)" id="clust-btn-2" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
+              Southeast (ATL)
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-purple-500 inline-block"></span> 🏭 Warehouse Hub</span>
+            <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-cyan-400 inline-block"></span> 🏪 Retail Store</span>
+            <span class="flex items-center gap-1.5 text-cyan-300"><span class="h-2.5 w-2.5 rounded-full bg-cyan-500 inline-block"></span> 🚚 In Transit (7)</span>
+            <span class="flex items-center gap-1.5 text-slate-400"><span class="h-2.5 w-2.5 rounded bg-slate-700 inline-block"></span> 🅿️ Docked (3)</span>
+            <span class="flex items-center gap-1.5 text-red-400"><span class="h-2.5 w-2.5 rounded-full bg-red-500 inline-block animate-ping"></span> ⚠️ Breakdown</span>
+            <span class="flex items-center gap-1.5 text-amber-300"><span class="h-2.5 w-2.5 rounded-full bg-amber-400 inline-block"></span> 🚨 Shortest-Path Rescuer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 2: SHOPKEEPER ORDER PORTAL ================= -->
+    <div id="view-shopkeeper" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b arrakis-border pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-xs font-bold border border-cyan-500/30">
+                RETAIL STORE WORKSPACE
+              </span>
+              <h2 class="text-lg font-bold text-white">Shopkeeper Replenishment & Order Desk</h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+              Store managers can inspect live shelf stock, daily sales velocity, and submit direct replenishment orders to the regional hub
+            </p>
+          </div>
+
+          <!-- Store Selector -->
+          <div class="flex items-center gap-2 bg-slate-900 border arrakis-border rounded-xl px-3 py-2">
+            <span class="text-xs font-mono text-slate-400">Operating Store:</span>
+            <select id="shopkeeper-store-select" onchange="updateShopkeeperStoreView()" class="bg-transparent text-sm text-cyan-300 font-mono font-bold focus:outline-none">
+              <option value="STORE_04" class="bg-slate-900">Newark Store #04 (Northeast Hub WH_01)</option>
+              <option value="STORE_01" class="bg-slate-900">Manhattan Store #01 (Northeast Hub WH_01)</option>
+              <option value="STORE_05" class="bg-slate-900">Hackensack Store #05 (Northeast Hub WH_01)</option>
+              <option value="STORE_08" class="bg-slate-900">Chicago Loop Store #08 (Midwest Hub WH_02)</option>
+              <option value="STORE_15" class="bg-slate-900">Downtown Atlanta Store #15 (Southeast Hub WH_03)</option>
             </select>
           </div>
-          <button onclick="triggerSelectedTruckBreakdown()" id="brk-btn" class="rounded-xl border border-red-500/50 bg-red-500/20 hover:bg-red-500/30 px-3.5 py-2 text-xs font-bold text-red-300 transition flex items-center gap-1.5 shadow-md shadow-red-950">
-            <span>⚠️</span> Break Down Truck
-          </button>
-          <button onclick="resetFleetPositions()" class="rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-300 transition">
-            Reset Fleet
-          </button>
-        </div>
-      </div>
-
-      <!-- MAP CONTAINER: Generously spaced, fully scattered SVG network -->
-      <div class="relative w-full h-[520px] rounded-xl overflow-hidden border arrakis-border bg-[#05060A]">
-        <!-- Map Canvas SVG -->
-        <svg id="vector-map" class="w-full h-full select-none" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <!-- Glow Filters -->
-            <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glow-gold" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glow-red" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="6" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glow-emerald" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <!-- Regional Radial Gradient Halos -->
-            <radialGradient id="grad-wh1" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.25" />
-              <stop offset="70%" stop-color="#8B5CF6" stop-opacity="0.08" />
-              <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
-            </radialGradient>
-            <radialGradient id="grad-wh2" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.25" />
-              <stop offset="70%" stop-color="#06B6D4" stop-opacity="0.08" />
-              <stop offset="100%" stop-color="#06B6D4" stop-opacity="0" />
-            </radialGradient>
-            <radialGradient id="grad-wh3" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#10B981" stop-opacity="0.25" />
-              <stop offset="70%" stop-color="#10B981" stop-opacity="0.08" />
-              <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
-            </radialGradient>
-          </defs>
-
-          <!-- Background Coordinate Grid -->
-          <g id="grid-lines" stroke="#101524" stroke-width="1" stroke-dasharray="3 4"></g>
-
-          <!-- Spacious Regional Territory Halos -->
-          <circle cx="780" cy="160" r="160" fill="url(#grad-wh1)" />
-          <circle cx="240" cy="160" r="160" fill="url(#grad-wh2)" />
-          <circle cx="520" cy="370" r="160" fill="url(#grad-wh3)" />
-
-          <!-- Region Boundary Indicators -->
-          <text x="780" y="325" fill="#8B5CF6" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">NORTHEAST REGION (NYC / NJ)</text>
-          <text x="240" y="325" fill="#06B6D4" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">MIDWEST REGION (CHICAGO)</text>
-          <text x="520" y="505" fill="#10B981" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">SOUTHEAST REGION (ATLANTA)</text>
-
-          <!-- Highway Arteries & Baseline Network Lines -->
-          <g id="corridors-layer"></g>
-
-          <!-- All Dedicated Truck Route Paths (Color-Coded Corridors) -->
-          <g id="truck-paths-layer"></g>
-
-          <!-- Inter-Warehouse Transshipment Arteries -->
-          <g id="transship-layer"></g>
-
-          <!-- Dynamic Rescue Polyline -->
-          <g id="rescue-layer"></g>
-
-          <!-- Pinned Stores Layer -->
-          <g id="stores-layer"></g>
-
-          <!-- Pinned Warehouses & Docks Layer -->
-          <g id="warehouses-layer"></g>
-
-          <!-- Animated Moving & Parked Trucks Layer -->
-          <g id="trucks-layer"></g>
-        </svg>
-
-        <!-- Floating Node Telemetry Modal (Hover / Click) -->
-        <div id="node-telemetry-tooltip" class="absolute hidden z-30 pointer-events-none rounded-xl border border-cyan-500/40 bg-slate-950/95 p-3 shadow-2xl text-xs font-mono backdrop-blur-md max-w-xs">
-          <p id="tt-title" class="font-bold text-white text-sm">Node Info</p>
-          <div id="tt-content" class="mt-1 text-slate-300 space-y-0.5 text-[11px]"></div>
-        </div>
-      </div>
-
-      <!-- Cluster Filter & Map Legend Bar -->
-      <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400 pt-1">
-        <div class="flex items-center gap-2">
-          <span class="text-slate-500">CAMERA VIEW:</span>
-          <button onclick="setMapCluster('all')" id="clust-btn-all" class="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold hover:bg-cyan-500/30 transition">
-            All (Full Network)
-          </button>
-          <button onclick="setMapCluster(0)" id="clust-btn-0" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
-            Focus Northeast (NYC)
-          </button>
-          <button onclick="setMapCluster(1)" id="clust-btn-1" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
-            Focus Midwest (CHI)
-          </button>
-          <button onclick="setMapCluster(2)" id="clust-btn-2" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
-            Focus Southeast (ATL)
-          </button>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-          <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-purple-500 inline-block"></span> 🏭 Warehouse Depot</span>
-          <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-cyan-400 inline-block"></span> 🏪 Retail Store</span>
-          <span class="flex items-center gap-1.5 text-cyan-300"><span class="h-2.5 w-2.5 rounded-full bg-cyan-500 inline-block"></span> 🚚 In Transit (7)</span>
-          <span class="flex items-center gap-1.5 text-slate-400"><span class="h-2.5 w-2.5 rounded bg-slate-700 inline-block"></span> 🅿️ Parked at Dock (3)</span>
-          <span class="flex items-center gap-1.5 text-red-400"><span class="h-2.5 w-2.5 rounded-full bg-red-500 inline-block animate-ping"></span> ⚠️ Breakdown</span>
-          <span class="flex items-center gap-1.5 text-amber-300"><span class="h-2.5 w-2.5 rounded-full bg-amber-400 inline-block"></span> 🚨 Dynamic Rescuer</span>
-          <span class="flex items-center gap-1.5 text-emerald-300"><span class="h-2 w-4 rounded bg-emerald-500 inline-block"></span> 📦 Transshipment</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 7. AUTONOMOUS RECOMMENDATION CENTER (MULTI-ECHELON & OCCASION INTELLIGENCE) -->
-    <div class="glass-card rounded-2xl p-5 space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b arrakis-border pb-3">
+        <!-- Shelf Inventory Grid -->
         <div>
-          <div class="flex items-center gap-2">
-            <h3 class="text-sm font-bold text-white">Autonomous Multi-Echelon Recommendation & Procurement Center</h3>
-            <span class="rounded bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 font-mono text-[9px] text-amber-300">
-              [Decision Support Engine: Store • Warehouse • Transshipment • Pre-Occasion]
+          <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">Live Shelf Inventory & Stockout Risk Analysis</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs" id="shopkeeper-shelf-grid">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Interactive Order Placement Box -->
+        <div class="rounded-xl border border-cyan-500/30 bg-slate-900/80 p-5 space-y-4">
+          <div class="flex items-center justify-between border-b arrakis-border pb-3">
+            <div>
+              <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>🛒</span> Place Replenishment Order to Warehouse
+              </h4>
+              <p class="text-xs text-slate-400 mt-0.5">Dispatches stock from assigned hub along the dynamic shortest highway corridor</p>
+            </div>
+            <span class="px-2.5 py-1 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
+              Hub Stock Available
             </span>
           </div>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Real-time algorithmic recommendations answering "Should he order?", inter-warehouse balancing, and pre-event surge buffering
-          </p>
-        </div>
 
-        <!-- Category Selector Filter -->
-        <div class="flex items-center gap-1.5 bg-slate-900 border arrakis-border rounded-xl p-1 text-xs font-mono">
-          <button onclick="setRecCategory('all')" id="rec-cat-all" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">All Recommendations</button>
-          <button onclick="setRecCategory('store')" id="rec-cat-store" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">Store Orders</button>
-          <button onclick="setRecCategory('warehouse')" id="rec-cat-warehouse" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">Warehouse POs</button>
-          <button onclick="setRecCategory('transship')" id="rec-cat-transship" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">Inter-Hub Transfer</button>
-          <button onclick="setRecCategory('occasion')" id="rec-cat-occasion" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">Pre-Occasion Surge</button>
-        </div>
-      </div>
-
-      <!-- Recommendation Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono" id="rec-cards-container">
-
-        <!-- Card 1: Store Level Replenishment ("Should He Order?") -->
-        <div class="rounded-xl border border-cyan-500/30 bg-slate-900/70 p-4 space-y-3 rec-card rec-type-store flex flex-col justify-between">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">STORE REPLENISHMENT</span>
-              <span class="text-slate-400 text-[10px]">Newark #04</span>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+            <div>
+              <label class="text-slate-400 text-[11px] block mb-1">Select Product SKU:</label>
+              <select id="order-sku-select" onchange="recalculateOrderSummary()" class="w-full rounded-lg bg-slate-950 border arrakis-border px-3 py-2 text-white font-mono focus:border-cyan-400">
+                <option value="PROD_001">PROD_001 (Perishables / Groceries)</option>
+                <option value="PROD_002">PROD_002 (Consumer Electronics)</option>
+                <option value="PROD_003">PROD_003 (Household Essentials)</option>
+              </select>
             </div>
-            <h4 class="text-white font-bold text-sm">Should Store #04 Order Now?</h4>
-            <div class="space-y-1 text-slate-300 text-[11px]">
-              <p>Current Stock: <strong class="text-red-400">110 units</strong></p>
-              <p>Reorder Point ($s$): <strong class="text-white">140 units</strong></p>
-              <p>Shortage Gap: <strong class="text-amber-400">-30 units below threshold</strong></p>
+
+            <div>
+              <label class="text-slate-400 text-[11px] block mb-1">Order Quantity (Units):</label>
+              <input type="number" id="order-qty-input" value="160" min="20" max="1000" step="10" oninput="recalculateOrderSummary()" class="w-full rounded-lg bg-slate-950 border arrakis-border px-3 py-2 text-cyan-400 font-bold font-mono focus:border-cyan-400" />
             </div>
-            <p class="text-slate-400 text-[10px] leading-relaxed">
-              <strong>Recommendation:</strong> Order <strong class="text-cyan-300">160 units</strong> from Northeast Hub (WH_01). Delivery time: 1 day.
-            </p>
+
+            <div>
+              <label class="text-slate-400 text-[11px] block mb-1">Shortest Path VRP Dispatch:</label>
+              <div class="rounded-lg bg-slate-950 border arrakis-border px-3 py-2 text-slate-300 font-mono flex items-center justify-between">
+                <span>Distance: <strong class="text-white" id="order-dist-disp">28.4 km</strong></span>
+                <span>Transit: <strong class="text-emerald-400" id="order-cost-disp">$35.50</strong></span>
+              </div>
+            </div>
           </div>
-          <button onclick="executeStoreReplenishment('STORE_04', 160)" id="btn-store-order" class="w-full rounded-lg bg-cyan-600 hover:bg-cyan-500 py-2 text-center text-xs font-bold text-slate-950 transition">
-            Approve Store Order (+160u)
-          </button>
-        </div>
 
-        <!-- Card 2: Warehouse Level PO (Upstream Supplier Order) -->
-        <div class="rounded-xl border border-purple-500/30 bg-slate-900/70 p-4 space-y-3 rec-card rec-type-warehouse flex flex-col justify-between">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] font-bold">WAREHOUSE PO</span>
-              <span class="text-slate-400 text-[10px]">WH_01 Depot</span>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+            <div class="text-xs font-mono text-slate-300">
+              Total Order Value: <strong class="text-white text-sm" id="order-total-val">$2,000.00</strong>
+              <span class="text-slate-500 ml-2">(Wholesale Rate @ $12.50/unit)</span>
             </div>
-            <h4 class="text-white font-bold text-sm">Factory Inbound Purchase Order</h4>
-            <div class="space-y-1 text-slate-300 text-[11px]">
-              <p>Northeast Capacity: <strong class="text-white">40,000 units</strong></p>
-              <p>Current Inventory: <strong class="text-cyan-400">31,200 units</strong></p>
-              <p>Lead Time Window: <strong class="text-purple-300">3 Days Inbound Transit</strong></p>
-            </div>
-            <p class="text-slate-400 text-[10px] leading-relaxed">
-              <strong>Recommendation:</strong> Issue Supplier Purchase Order for <strong class="text-purple-300">4,500 units</strong> to arrive before cycle cutoff.
-            </p>
+            <button onclick="submitShopkeeperOrder()" id="btn-submit-order" class="rounded-xl bg-cyan-500 hover:bg-cyan-400 px-6 py-3 font-bold text-xs text-slate-950 shadow-lg shadow-cyan-500/25 transition flex items-center justify-center gap-2">
+              <span>🚀</span> Submit Order & Dispatch Shortest-Path Truck
+            </button>
           </div>
-          <button onclick="executeWarehousePO('WH_01', 4500)" id="btn-wh-po" class="w-full rounded-lg bg-purple-600 hover:bg-purple-500 py-2 text-center text-xs font-bold text-white transition">
-            Issue Supplier PO (4,500u)
-          </button>
         </div>
 
-        <!-- Card 3: Inter-Warehouse Transshipment (Hub Rebalancing) -->
-        <div class="rounded-xl border border-emerald-500/30 bg-slate-900/70 p-4 space-y-3 rec-card rec-type-transship flex flex-col justify-between">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">INTER-WAREHOUSE</span>
-              <span class="text-slate-400 text-[10px]">WH_02 ➔ WH_01</span>
-            </div>
-            <h4 class="text-white font-bold text-sm">Transshipment Inventory Balancing</h4>
-            <div class="space-y-1 text-slate-300 text-[11px]">
-              <p>Origin: <strong class="text-cyan-300">Midwest Hub (+12k Surplus)</strong></p>
-              <p>Destination: <strong class="text-purple-300">Northeast Hub (Deficit)</strong></p>
-              <p>Freight Cost: <strong class="text-slate-300">$240</strong> vs Penalty: <strong class="text-emerald-400">$6,250 saved</strong></p>
-            </div>
-            <p class="text-slate-400 text-[10px] leading-relaxed">
-              <strong>Recommendation:</strong> Rebalance <strong class="text-emerald-300">2,500 units</strong> via inter-hub transport corridor. Net gain: <strong class="text-emerald-400">+$6,010</strong>.
-            </p>
+        <!-- Recent Store Orders Ledger -->
+        <div>
+          <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">Store Order Status & Inbound Tracking</h3>
+          <div class="rounded-xl border arrakis-border overflow-hidden">
+            <table class="w-full text-left font-mono text-xs">
+              <thead class="bg-slate-900/90 text-slate-400 border-b arrakis-border text-[11px]">
+                <tr>
+                  <th class="p-3">Order ID</th>
+                  <th class="p-3">Product SKU</th>
+                  <th class="p-3">Quantity</th>
+                  <th class="p-3">Assigned Hub</th>
+                  <th class="p-3">VRP Shortest Path</th>
+                  <th class="p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="store-orders-tbody" class="divide-y divide-slate-800 bg-slate-950/60 text-slate-300 text-[11px]">
+                <tr>
+                  <td class="p-3 font-bold text-cyan-400">#ORD-8491</td>
+                  <td class="p-3">PROD_001</td>
+                  <td class="p-3">160 units</td>
+                  <td class="p-3">WH_01 Depot</td>
+                  <td class="p-3 text-slate-400">28.4 km (Optimal)</td>
+                  <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">READY TO ORDER</span></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <button onclick="executeInterWarehouseTransshipment('WH_02', 'WH_01', 2500)" id="btn-transship" class="w-full rounded-lg bg-emerald-500 hover:bg-emerald-400 py-2 text-center text-xs font-bold text-slate-950 transition">
-            Execute Transshipment (2,500u)
-          </button>
         </div>
-
-        <!-- Card 4: Occasion / Holiday Promotional Surge Pre-Build -->
-        <div class="rounded-xl border border-amber-500/40 bg-slate-900/70 p-4 space-y-3 rec-card rec-type-occasion flex flex-col justify-between">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">PRE-OCCASION SURGE</span>
-              <span class="text-amber-400 text-[10px] animate-pulse">🎄 Holiday Rush</span>
-            </div>
-            <h4 class="text-white font-bold text-sm">Pre-Event Buffer Stock Build</h4>
-            <div class="space-y-1 text-slate-300 text-[11px]">
-              <p>Occasion: <strong class="text-amber-300">Black Friday / Holiday Rush</strong></p>
-              <p>Forecasted Demand: <strong class="text-red-400">+140% surge in 5 days</strong></p>
-              <p>Stockout Risk Without Buffer: <strong class="text-red-400">38.5% Probability</strong></p>
-            </div>
-            <p class="text-slate-400 text-[10px] leading-relaxed">
-              <strong>Recommendation:</strong> Authorize pre-event safety stock build of <strong class="text-amber-300">1,200 units</strong> before supplier order cutoff.
-            </p>
-          </div>
-          <button onclick="executePreOccasionBufferBuild(1200)" id="btn-occasion" class="w-full rounded-lg bg-amber-500 hover:bg-amber-400 py-2 text-center text-xs font-bold text-slate-950 transition">
-            Authorize Pre-Occasion Build
-          </button>
-        </div>
-
       </div>
     </div>
 
-    <!-- 8. DEMAND FORECASTING & STRATEGY LAB (PURE HIGH-DPI CANVAS CHARTS) -->
+    <!-- ================= VIEW 3: WAREHOUSE SKU ASSORTMENT & SCENARIOS ================= -->
+    <div id="view-warehouse" class="space-y-6 hidden">
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b arrakis-border pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono text-xs font-bold border border-purple-500/30">
+                REGIONAL WAREHOUSE STRATEGY
+              </span>
+              <h2 class="text-lg font-bold text-white">Warehouse SKU Planning & Assortment Scenarios</h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+              Determine which products should be stocked in which warehouse, evaluate storage tradeoffs, and simulate replenishment scenarios
+            </p>
+          </div>
+
+          <!-- Warehouse Selector -->
+          <div class="flex items-center gap-2 bg-slate-900 border arrakis-border rounded-xl px-3 py-2">
+            <span class="text-xs font-mono text-slate-400">Warehouse:</span>
+            <select id="warehouse-view-select" onchange="updateWarehouseScenariosView()" class="bg-transparent text-sm text-purple-300 font-mono font-bold focus:outline-none">
+              <option value="WH_01" class="bg-slate-900">WH_01 Northeast Primary Hub (NYC/NJ)</option>
+              <option value="WH_02" class="bg-slate-900">WH_02 Midwest Logistics Hub (Chicago)</option>
+              <option value="WH_03" class="bg-slate-900">WH_03 Southeast Regional Hub (Atlanta)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4 Assortment Scenarios ("Which product should be in warehouse?") -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider">Select Warehouse Assortment & Stocking Policy Scenario</h3>
+            <span class="text-[11px] font-mono text-cyan-400" id="current-wh-scenario-label">Active Scenario: Balanced Multi-SKU Assortment</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
+            <!-- Scenario 1 -->
+            <button onclick="applyWarehouseScenario('balanced')" id="btn-scen-balanced" class="p-4 rounded-xl border border-purple-500/50 bg-purple-500/20 text-left transition hover:scale-105">
+              <p class="font-bold text-purple-300 text-sm">Balanced Multi-SKU</p>
+              <p class="text-slate-300 text-[11px] mt-1 leading-relaxed">
+                Standard steady-state stocking. PROD_001 (40%), PROD_002 (30%), PROD_003 (30%).
+              </p>
+              <span class="mt-2 inline-block text-[10px] text-cyan-300 font-semibold">Holding Cost: $1,560/day</span>
+            </button>
+
+            <!-- Scenario 2 -->
+            <button onclick="applyWarehouseScenario('holiday')" id="btn-scen-holiday" class="p-4 rounded-xl border arrakis-border bg-slate-900/60 text-left transition hover:scale-105">
+              <p class="font-bold text-amber-300 text-sm">Holiday Surge Pre-Build</p>
+              <p class="text-slate-400 text-[11px] mt-1 leading-relaxed">
+                Ramp high-velocity seasonal perishables (PROD_001 to 65% capacity) to prevent stockouts.
+              </p>
+              <span class="mt-2 inline-block text-[10px] text-amber-300 font-semibold">Stockout Risk: 0.1%</span>
+            </button>
+
+            <!-- Scenario 3 -->
+            <button onclick="applyWarehouseScenario('jit')" id="btn-scen-jit" class="p-4 rounded-xl border arrakis-border bg-slate-900/60 text-left transition hover:scale-105">
+              <p class="font-bold text-emerald-300 text-sm">Lean Just-In-Time (JIT)</p>
+              <p class="text-slate-400 text-[11px] mt-1 leading-relaxed">
+                Cut warehouse buffer to 45% capacity. Maximizes turnover, saves $480/day holding costs.
+              </p>
+              <span class="mt-2 inline-block text-[10px] text-emerald-300 font-semibold">Holding Cost: $820/day</span>
+            </button>
+
+            <!-- Scenario 4 -->
+            <button onclick="applyWarehouseScenario('resilient')" id="btn-scen-resilient" class="p-4 rounded-xl border arrakis-border bg-slate-900/60 text-left transition hover:scale-105">
+              <p class="font-bold text-cyan-300 text-sm">Port Shock Resilience</p>
+              <p class="text-slate-400 text-[11px] mt-1 leading-relaxed">
+                Maximum 95% buffer allocation across all SKUs against maritime/trucking blockades.
+              </p>
+              <span class="mt-2 inline-block text-[10px] text-cyan-300 font-semibold">Resilience: 30 Days</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live SKU Assortment Breakdown Table -->
+        <div>
+          <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">Warehouse SKU Assortment Allocation</h3>
+          <div class="rounded-xl border arrakis-border overflow-hidden">
+            <table class="w-full text-left font-mono text-xs">
+              <thead class="bg-slate-900/90 text-slate-400 border-b arrakis-border text-[11px]">
+                <tr>
+                  <th class="p-3">Product SKU</th>
+                  <th class="p-3">Category</th>
+                  <th class="p-3">Current Stock</th>
+                  <th class="p-3">Capacity Share</th>
+                  <th class="p-3">Daily Turnover</th>
+                  <th class="p-3">Storage Cost</th>
+                  <th class="p-3">Stocking Recommendation</th>
+                </tr>
+              </thead>
+              <tbody id="wh-sku-tbody" class="divide-y divide-slate-800 bg-slate-950/60 text-slate-300 text-[11px]">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 4: INTER-WAREHOUSE TRANSSHIPMENT ================= -->
+    <div id="view-transship" class="space-y-6 hidden">
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b arrakis-border pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30">
+                INTER-WAREHOUSE NETWORK
+              </span>
+              <h2 class="text-lg font-bold text-white">Inter-Warehouse Stock Transshipment & Balancing</h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+              Transship inventory between regional hubs along shortest highway corridors to eliminate stockouts and equalize holding loads
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold">
+              MILP Rebalancing Optimizer: ONLINE
+            </span>
+          </div>
+        </div>
+
+        <!-- Regional Balance Comparison Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+          <!-- Hub 1 -->
+          <div class="rounded-xl border arrakis-border bg-slate-900/70 p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-purple-300 font-bold">WH_01 (Northeast Hub)</span>
+              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">DEFICIT RISK</span>
+            </div>
+            <p class="text-white text-xl font-bold" id="trans-wh1-stock">31,200 / 40,000 u</p>
+            <p class="text-slate-400 text-[11px]">High consumer demand in NYC/NJ cluster. Needs +2,500 units to reach safety target.</p>
+          </div>
+
+          <!-- Hub 2 -->
+          <div class="rounded-xl border arrakis-border bg-slate-900/70 p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-cyan-300 font-bold">WH_02 (Midwest Hub)</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">SURPLUS</span>
+            </div>
+            <p class="text-white text-xl font-bold" id="trans-wh2-stock">38,400 / 45,000 u</p>
+            <p class="text-slate-400 text-[11px]">Strong factory supply buffer. Has +12,400 surplus above safety threshold.</p>
+          </div>
+
+          <!-- Hub 3 -->
+          <div class="rounded-xl border arrakis-border bg-slate-900/70 p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-emerald-300 font-bold">WH_03 (Southeast Hub)</span>
+              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">BALANCED</span>
+            </div>
+            <p class="text-white text-xl font-bold" id="trans-wh3-stock">24,900 / 35,000 u</p>
+            <p class="text-slate-400 text-[11px]">Operating within normal continuous $(s, S)$ replenishment parameters.</p>
+          </div>
+        </div>
+
+        <!-- Transshipment Dispatch Desk -->
+        <div class="rounded-xl border border-emerald-500/30 bg-slate-900/80 p-5 space-y-4">
+          <div class="flex items-center justify-between border-b arrakis-border pb-3">
+            <div>
+              <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>🚚</span> Execute Inter-Warehouse Transshipment
+              </h4>
+              <p class="text-xs text-slate-400 mt-0.5">Calculates the shortest inter-hub highway distance, fuel surcharge, and net economic savings</p>
+            </div>
+            <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 text-xs font-mono font-bold">
+              Net Gain: +$6,010.00
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-mono">
+            <div>
+              <label class="text-slate-400 text-[11px] block mb-1">Origin Warehouse (Surplus):</label>
+              <select id="trans-from-select" class="w-full rounded-lg bg-slate-950 border arrakis-border px-3 py-2 text-cyan-300 font-mono">
+                <option value="WH_02">WH_02 Midwest Hub (Chicago)</option>
+                <option value="WH_03">WH_03 Southeast Hub (Atlanta)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-slate-400 text-[11px] block mb-1">Destination Warehouse (Deficit):</label>
+              <select id="trans-to-select" class="w-full rounded-lg bg-slate-950 border arrakis-border px-3 py-2 text-purple-300 font-mono">
+                <option value="WH_01">WH_01 Northeast Hub (NYC/NJ)</option>
+                <option value="WH_03">WH_03 Southeast Hub (Atlanta)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-slate-400 text-[11px] block mb-1">Product SKU:</label>
+              <select id="trans-sku-select" class="w-full rounded-lg bg-slate-950 border arrakis-border px-3 py-2 text-white font-mono">
+                <option value="PROD_001">PROD_001 (Perishables / Groceries)</option>
+                <option value="PROD_002">PROD_002 (Consumer Electronics)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-slate-400 text-[11px] block mb-1">Transfer Units:</label>
+              <input type="number" id="trans-qty-input" value="2500" min="500" max="10000" step="500" class="w-full rounded-lg bg-slate-950 border arrakis-border px-3 py-2 text-emerald-400 font-bold font-mono" />
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+            <div class="text-xs font-mono text-slate-300">
+              Shortest Corridor: <strong class="text-white">780 km</strong> | Freight Cost: <strong class="text-slate-200">$240.00</strong> | Lost Sales Saved: <strong class="text-emerald-400">+$6,250.00</strong>
+            </div>
+            <button onclick="submitTransshipment()" id="btn-submit-transship" class="rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-3 font-bold text-xs text-slate-950 shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2">
+              <span>🚀</span> Dispatch Inter-Hub Transshipment Carrier
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= CHARTS: DEMAND FORECAST & STRATEGY LAB ================= -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
       <!-- LightGBM Quantile Forecast Card -->
@@ -623,7 +770,7 @@ WEB_HTML = r"""<!DOCTYPE html>
 
   </main>
 
-  <!-- ================= JAVASCRIPT SIMULATION LOGIC ================= -->
+  <!-- ================= JAVASCRIPT DIGITAL TWIN LOGIC ================= -->
   <script>
     // Global Simulation State
     let currentTick = 0;
@@ -631,7 +778,6 @@ WEB_HTML = r"""<!DOCTYPE html>
     let animFrameId = null;
     let optimizerEnabled = true;
     let showAllTruckPaths = true;
-    let currentTourIdx = 0;
     let activeCluster = 'all';
 
     // 3 Regional Hub Warehouses
@@ -644,33 +790,33 @@ WEB_HTML = r"""<!DOCTYPE html>
     // 20 Retail Stores
     const STORES = [
       // Cluster 0: Northeast
-      { id: 'STORE_01', name: 'Manhattan #01', x: 800, y: 65, cluster: 0, demand: 45, inventory: 180 },
-      { id: 'STORE_02', name: 'Brooklyn #02', x: 885, y: 120, cluster: 0, demand: 52, inventory: 140 },
-      { id: 'STORE_03', name: 'Bronx #03', x: 895, y: 205, cluster: 0, demand: 38, inventory: 95 },
-      { id: 'STORE_04', name: 'Newark #04', x: 695, y: 245, cluster: 0, demand: 60, inventory: 110 },
-      { id: 'STORE_05', name: 'Hackensack #05', x: 675, y: 150, cluster: 0, demand: 42, inventory: 85 },
-      { id: 'STORE_06', name: 'Staten Island #06', x: 765, y: 265, cluster: 0, demand: 35, inventory: 160 },
-      { id: 'STORE_07', name: 'Stamford #07', x: 880, y: 50, cluster: 0, demand: 48, inventory: 130 },
+      { id: 'STORE_01', name: 'Manhattan Store #01', x: 800, y: 65, cluster: 0, demand: 45, inventory: 180 },
+      { id: 'STORE_02', name: 'Brooklyn Store #02', x: 885, y: 120, cluster: 0, demand: 52, inventory: 140 },
+      { id: 'STORE_03', name: 'Bronx Store #03', x: 895, y: 205, cluster: 0, demand: 38, inventory: 95 },
+      { id: 'STORE_04', name: 'Newark Store #04', x: 695, y: 245, cluster: 0, demand: 60, inventory: 110 },
+      { id: 'STORE_05', name: 'Hackensack Store #05', x: 675, y: 150, cluster: 0, demand: 42, inventory: 85 },
+      { id: 'STORE_06', name: 'Staten Island Store #06', x: 765, y: 265, cluster: 0, demand: 35, inventory: 160 },
+      { id: 'STORE_07', name: 'Stamford Store #07', x: 880, y: 50, cluster: 0, demand: 48, inventory: 130 },
 
       // Cluster 1: Midwest
-      { id: 'STORE_08', name: 'Chicago Loop #08', x: 240, y: 75, cluster: 1, demand: 55, inventory: 210 },
-      { id: 'STORE_09', name: 'Hyde Park #09', x: 325, y: 110, cluster: 1, demand: 40, inventory: 120 },
-      { id: 'STORE_10', name: 'Albany Park #10', x: 335, y: 190, cluster: 1, demand: 46, inventory: 145 },
-      { id: 'STORE_11', name: 'Evanston #11', x: 275, y: 250, cluster: 1, demand: 50, inventory: 175 },
-      { id: 'STORE_12', name: 'Berwyn #12', x: 175, y: 240, cluster: 1, demand: 36, inventory: 90 },
-      { id: 'STORE_13', name: 'Oak Lawn #13', x: 135, y: 170, cluster: 1, demand: 32, inventory: 130 },
-      { id: 'STORE_14', name: 'Wheaton #14', x: 155, y: 90, cluster: 1, demand: 44, inventory: 160 },
+      { id: 'STORE_08', name: 'Chicago Loop Store #08', x: 240, y: 75, cluster: 1, demand: 55, inventory: 210 },
+      { id: 'STORE_09', name: 'Hyde Park Store #09', x: 325, y: 110, cluster: 1, demand: 40, inventory: 120 },
+      { id: 'STORE_10', name: 'Albany Park Store #10', x: 335, y: 190, cluster: 1, demand: 46, inventory: 145 },
+      { id: 'STORE_11', name: 'Evanston Store #11', x: 275, y: 250, cluster: 1, demand: 50, inventory: 175 },
+      { id: 'STORE_12', name: 'Berwyn Store #12', x: 175, y: 240, cluster: 1, demand: 36, inventory: 90 },
+      { id: 'STORE_13', name: 'Oak Lawn Store #13', x: 135, y: 170, cluster: 1, demand: 32, inventory: 130 },
+      { id: 'STORE_14', name: 'Wheaton Store #14', x: 155, y: 90, cluster: 1, demand: 44, inventory: 160 },
 
       // Cluster 2: Southeast
-      { id: 'STORE_15', name: 'Downtown Atlanta #15', x: 520, y: 270, cluster: 2, demand: 58, inventory: 190 },
-      { id: 'STORE_16', name: 'Buckhead #16', x: 615, y: 310, cluster: 2, demand: 47, inventory: 155 },
-      { id: 'STORE_17', name: 'Airport Perimeter #17', x: 625, y: 410, cluster: 2, demand: 51, inventory: 110 },
-      { id: 'STORE_18', name: 'Smyrna #18', x: 555, y: 470, cluster: 2, demand: 39, inventory: 140 },
-      { id: 'STORE_19', name: 'Decatur #19', x: 435, y: 450, cluster: 2, demand: 43, inventory: 125 },
-      { id: 'STORE_20', name: 'Duluth #20', x: 415, y: 340, cluster: 2, demand: 41, inventory: 95 },
+      { id: 'STORE_15', name: 'Downtown Atlanta Store #15', x: 520, y: 270, cluster: 2, demand: 58, inventory: 190 },
+      { id: 'STORE_16', name: 'Buckhead Store #16', x: 615, y: 310, cluster: 2, demand: 47, inventory: 155 },
+      { id: 'STORE_17', name: 'Airport Perimeter Store #17', x: 625, y: 410, cluster: 2, demand: 51, inventory: 110 },
+      { id: 'STORE_18', name: 'Smyrna Store #18', x: 555, y: 470, cluster: 2, demand: 39, inventory: 140 },
+      { id: 'STORE_19', name: 'Decatur Store #19', x: 435, y: 450, cluster: 2, demand: 43, inventory: 125 },
+      { id: 'STORE_20', name: 'Duluth Store #20', x: 415, y: 340, cluster: 2, demand: 41, inventory: 95 },
     ];
 
-    // 10 Fleet Trucks with Dedicated Full Path Routes
+    // 10 Fleet Trucks
     let trucks = [
       // Cluster 0: Northeast
       { id: 'TRUCK_01', driver: 'Marcus Vance', status: 'IN_TRANSIT', progress: 0.35, speed: 55, cargo: 380, cluster: 0, pathColor: '#06B6D4', stops: ['WH_01', 'STORE_01', 'STORE_03', 'WH_01'] },
@@ -689,24 +835,64 @@ WEB_HTML = r"""<!DOCTYPE html>
       { id: 'TRUCK_10', driver: 'Angela Davis', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 2, pathColor: '#FBBF24', stops: ['WH_03', 'WH_03'], isStandby: true },
     ];
 
-    // Dynamic Rescue Mission State
+    // Shopkeeper Store Products State
+    const STORE_PRODUCTS = {
+      'STORE_04': [
+        { sku: 'PROD_001', name: 'Fresh Groceries & Dairy', stock: 85, reorderPoint: 140, burn: 42, unitCost: 12.50, status: 'DANGER', recOrder: 160 },
+        { sku: 'PROD_002', name: 'Consumer Electronics', stock: 140, reorderPoint: 100, burn: 18, unitCost: 85.00, status: 'HEALTHY', recOrder: 0 },
+        { sku: 'PROD_003', name: 'Household Essentials', stock: 95, reorderPoint: 120, burn: 28, unitCost: 24.00, status: 'WARNING', recOrder: 120 }
+      ],
+      'STORE_01': [
+        { sku: 'PROD_001', name: 'Fresh Groceries & Dairy', stock: 180, reorderPoint: 140, burn: 45, unitCost: 12.50, status: 'HEALTHY', recOrder: 0 },
+        { sku: 'PROD_002', name: 'Consumer Electronics', stock: 90, reorderPoint: 110, burn: 22, unitCost: 85.00, status: 'WARNING', recOrder: 80 },
+        { sku: 'PROD_003', name: 'Household Essentials', stock: 150, reorderPoint: 120, burn: 30, unitCost: 24.00, status: 'HEALTHY', recOrder: 0 }
+      ],
+      'STORE_05': [
+        { sku: 'PROD_001', name: 'Fresh Groceries & Dairy', stock: 70, reorderPoint: 130, burn: 38, unitCost: 12.50, status: 'DANGER', recOrder: 180 },
+        { sku: 'PROD_002', name: 'Consumer Electronics', stock: 120, reorderPoint: 90, burn: 15, unitCost: 85.00, status: 'HEALTHY', recOrder: 0 },
+        { sku: 'PROD_003', name: 'Household Essentials', stock: 85, reorderPoint: 110, burn: 25, unitCost: 24.00, status: 'WARNING', recOrder: 110 }
+      ],
+      'STORE_08': [
+        { sku: 'PROD_001', name: 'Fresh Groceries & Dairy', stock: 210, reorderPoint: 150, burn: 55, unitCost: 12.50, status: 'HEALTHY', recOrder: 0 },
+        { sku: 'PROD_002', name: 'Consumer Electronics', stock: 130, reorderPoint: 120, burn: 25, unitCost: 85.00, status: 'HEALTHY', recOrder: 0 },
+        { sku: 'PROD_003', name: 'Household Essentials', stock: 115, reorderPoint: 130, burn: 35, unitCost: 24.00, status: 'WARNING', recOrder: 100 }
+      ],
+      'STORE_15': [
+        { sku: 'PROD_001', name: 'Fresh Groceries & Dairy', stock: 190, reorderPoint: 150, burn: 58, unitCost: 12.50, status: 'HEALTHY', recOrder: 0 },
+        { sku: 'PROD_002', name: 'Consumer Electronics', stock: 95, reorderPoint: 100, burn: 20, unitCost: 85.00, status: 'WARNING', recOrder: 90 },
+        { sku: 'PROD_003', name: 'Household Essentials', stock: 160, reorderPoint: 120, burn: 32, unitCost: 24.00, status: 'HEALTHY', recOrder: 0 }
+      ]
+    };
+
+    // Active Shopkeeper Delivery Mission State
+    let shopkeeperDelivery = {
+      active: false,
+      fromWh: 'WH_01',
+      toStore: 'STORE_04',
+      sku: 'PROD_001',
+      qty: 160,
+      progress: 0.0,
+      truckId: 'TRUCK_01',
+    };
+
+    // Rescue Mission State
     let rescueMission = {
       active: false,
       brokenTruckId: null,
       rescuerTruckId: null,
       breakdownPos: null,
-      targetStoreId: null,
+      targetStoreId: 'STORE_04',
       originPos: null,
     };
 
-    // Inter-Warehouse Transshipment Mission State
+    // Transshipment State
     let transshipMission = {
       active: false,
       fromWh: 'WH_02',
       toWh: 'WH_01',
       units: 2500,
       progress: 0.0,
-      speed: 0.004,
+      speed: 0.005,
     };
 
     function getNodePos(nodeId) {
@@ -717,7 +903,6 @@ WEB_HTML = r"""<!DOCTYPE html>
       return { x: 500, y: 250 };
     }
 
-    // Calculates real-time (x, y) location of any truck
     function getTruckCurrentPos(trk) {
       if (trk.status === 'PARKED') {
         const wh = WAREHOUSES[trk.cluster];
@@ -738,7 +923,6 @@ WEB_HTML = r"""<!DOCTYPE html>
           return { x: p2.x + (p3.x - p2.x) * t, y: p2.y + (p3.y - p2.y) * t };
         }
       }
-      // Active route
       const numSegments = trk.stops.length - 1;
       const totalProgress = (trk.progress % 1) * numSegments;
       const currentSegment = Math.min(Math.floor(totalProgress), numSegments - 1);
@@ -749,6 +933,220 @@ WEB_HTML = r"""<!DOCTYPE html>
         x: pStart.x + (pEnd.x - pStart.x) * segT,
         y: pStart.y + (pEnd.y - pStart.y) * segT
       };
+    }
+
+    // ================= WORKSPACE VIEW SWITCHER =================
+    function switchWorkspaceView(viewId) {
+      ['map', 'shopkeeper', 'warehouse', 'transship'].forEach(id => {
+        const el = document.getElementById('view-' + id);
+        const btn = document.getElementById('tab-btn-' + id);
+        if (id === viewId) {
+          if (el) el.classList.remove('hidden');
+          if (btn) {
+            btn.className = 'px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 transition flex items-center gap-2 shadow-sm';
+          }
+        } else {
+          if (el) el.classList.add('hidden');
+          if (btn) {
+            btn.className = 'px-4 py-2 rounded-xl bg-slate-900 text-slate-400 hover:text-white border arrakis-border transition flex items-center gap-2';
+          }
+        }
+      });
+
+      if (viewId === 'shopkeeper') updateShopkeeperStoreView();
+      if (viewId === 'warehouse') updateWarehouseScenariosView();
+      if (viewId === 'map') renderMap();
+    }
+
+    // ================= SHOPKEEPER ORDER LOGIC =================
+    function updateShopkeeperStoreView() {
+      const storeId = document.getElementById('shopkeeper-store-select').value;
+      const prods = STORE_PRODUCTS[storeId] || STORE_PRODUCTS['STORE_04'];
+      const grid = document.getElementById('shopkeeper-shelf-grid');
+      grid.innerHTML = '';
+
+      prods.forEach(p => {
+        const daysLeft = (p.stock / p.burn).toFixed(1);
+        const isLow = p.stock < p.reorderPoint;
+        const borderCls = isLow ? 'border-red-500/40 bg-red-950/20' : 'border-slate-800 bg-slate-900/60';
+        const badgeCls = isLow ? 'bg-red-500/20 text-red-300 border-red-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+
+        grid.innerHTML += `
+          <div class="rounded-xl border ${borderCls} p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white">${p.sku}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${badgeCls}">${p.status}</span>
+            </div>
+            <p class="text-slate-300 text-[11px]">${p.name}</p>
+            <div class="space-y-1 text-slate-400 text-[11px] pt-1">
+              <div class="flex justify-between"><span>Current Stock:</span> <strong class="${isLow ? 'text-red-400 font-bold' : 'text-white'}">${p.stock} units</strong></div>
+              <div class="flex justify-between"><span>Reorder Point ($s$):</span> <strong class="text-slate-300">${p.reorderPoint} units</strong></div>
+              <div class="flex justify-between"><span>Depletion Horizon:</span> <strong class="${isLow ? 'text-amber-400 font-bold' : 'text-slate-300'}">${daysLeft} Days</strong></div>
+            </div>
+            ${p.recOrder > 0 ? `
+              <button onclick="quickSelectOrder('${p.sku}', ${p.recOrder})" class="w-full mt-2 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 py-1 text-center text-[10px] font-bold transition">
+                ⚡ 1-Click Order (+${p.recOrder} Units)
+              </button>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      recalculateOrderSummary();
+    }
+
+    function quickSelectOrder(sku, qty) {
+      document.getElementById('order-sku-select').value = sku;
+      document.getElementById('order-qty-input').value = qty;
+      recalculateOrderSummary();
+      document.getElementById('order-qty-input').focus();
+    }
+
+    function recalculateOrderSummary() {
+      const storeId = document.getElementById('shopkeeper-store-select').value;
+      const sku = document.getElementById('order-sku-select').value;
+      const qty = parseInt(document.getElementById('order-qty-input').value) || 160;
+      const st = STORES.find(s => s.id === storeId);
+      const wh = WAREHOUSES[st ? st.cluster : 0];
+
+      // Dynamic shortest Euclidean distance
+      const dist = Math.hypot(wh.x - (st ? st.x : 700), wh.y - (st ? st.y : 240));
+      const distKm = Math.round(dist * 0.18 + 5);
+      const freightCost = (distKm * 1.25).toFixed(2);
+      const unitCost = (sku === 'PROD_002') ? 85.0 : (sku === 'PROD_003' ? 24.0 : 12.50);
+      const totalVal = (qty * unitCost).toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+      document.getElementById('order-dist-disp').innerText = `${distKm} km (Shortest)`;
+      document.getElementById('order-cost-disp').innerText = `$${freightCost}`;
+      document.getElementById('order-total-val').innerText = `$${totalVal}`;
+    }
+
+    function submitShopkeeperOrder() {
+      const storeId = document.getElementById('shopkeeper-store-select').value;
+      const sku = document.getElementById('order-sku-select').value;
+      const qty = parseInt(document.getElementById('order-qty-input').value) || 160;
+      const st = STORES.find(s => s.id === storeId);
+      const wh = WAREHOUSES[st ? st.cluster : 0];
+
+      // Dispatch dynamic delivery truck on map
+      shopkeeperDelivery.active = true;
+      shopkeeperDelivery.fromWh = wh.id;
+      shopkeeperDelivery.toStore = storeId;
+      shopkeeperDelivery.sku = sku;
+      shopkeeperDelivery.qty = qty;
+      shopkeeperDelivery.progress = 0.05;
+
+      // Add to ledger
+      const ordId = '#ORD-' + Math.floor(1000 + Math.random() * 9000);
+      const tbody = document.getElementById('store-orders-tbody');
+      tbody.innerHTML = `
+        <tr class="bg-cyan-950/30">
+          <td class="p-3 font-bold text-cyan-400">${ordId}</td>
+          <td class="p-3">${sku}</td>
+          <td class="p-3 font-bold text-white">${qty} units</td>
+          <td class="p-3">${wh.name.split(' ')[0]}</td>
+          <td class="p-3 text-cyan-300">Shortest VRP Corridor</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold animate-pulse">DISPATCHED</span></td>
+        </tr>
+      ` + tbody.innerHTML;
+
+      showInboundArrivalToast(`Order Dispatched: ${ordId}`, `Dispatched ${qty} units of ${sku} from ${wh.id} to ${storeId} along shortest VRP path.`, `+${qty} Units In Transit`);
+
+      // Switch to map view to watch the dynamic delivery
+      switchWorkspaceView('map');
+    }
+
+    // ================= WAREHOUSE SKU SCENARIOS LOGIC =================
+    const WAREHOUSE_SCENARIOS = {
+      'balanced': {
+        name: 'Balanced Multi-SKU Assortment',
+        holdingDaily: 1560,
+        skus: [
+          { sku: 'PROD_001', cat: 'Fresh Groceries', stock: 15000, capPct: '37.5%', turn: '1,200 u/d', cost: '$600/d', rec: 'Maintain buffer across regional retail network' },
+          { sku: 'PROD_002', cat: 'Consumer Electronics', stock: 8000, capPct: '20.0%', turn: '340 u/d', cost: '$480/d', rec: 'High margin, stable $(s, S)$ continuous order' },
+          { sku: 'PROD_003', cat: 'Household Goods', stock: 12000, capPct: '30.0%', turn: '680 u/d', cost: '$480/d', rec: 'High volume staple, replenish weekly from factory' }
+        ]
+      },
+      'holiday': {
+        name: 'Holiday Promotional Surge Pre-Build',
+        holdingDaily: 1980,
+        skus: [
+          { sku: 'PROD_001', cat: 'Fresh Groceries', stock: 26000, capPct: '65.0%', turn: '2,800 u/d', cost: '$1,040/d', rec: 'Ramped +140% buffer for Black Friday / Feast rush' },
+          { sku: 'PROD_002', cat: 'Consumer Electronics', stock: 9500, capPct: '23.8%', turn: '650 u/d', cost: '$570/d', rec: 'Cyber Week promotional stock secured' },
+          { sku: 'PROD_003', cat: 'Household Goods', stock: 4500, capPct: '11.2%', turn: '300 u/d', cost: '$370/d', rec: 'Deprioritized to make warehouse space for surge SKUs' }
+        ]
+      },
+      'jit': {
+        name: 'Lean Just-In-Time (JIT) Stock Optimization',
+        holdingDaily: 820,
+        skus: [
+          { sku: 'PROD_001', cat: 'Fresh Groceries', stock: 7500, capPct: '18.8%', turn: '1,200 u/d', cost: '$300/d', rec: 'Ultra lean turns, direct dock-to-truck crossdock' },
+          { sku: 'PROD_002', cat: 'Consumer Electronics', stock: 4000, capPct: '10.0%', turn: '340 u/d', cost: '$240/d', rec: 'Air cargo rapid replenishment upon store trigger' },
+          { sku: 'PROD_003', cat: 'Household Goods', stock: 6500, capPct: '16.2%', turn: '680 u/d', cost: '$280/d', rec: 'Bi-daily factory drop shipping' }
+        ]
+      },
+      'resilient': {
+        name: 'Port Shock & Disruption Resilience Buffer',
+        holdingDaily: 2450,
+        skus: [
+          { sku: 'PROD_001', cat: 'Fresh Groceries', stock: 18000, capPct: '45.0%', turn: '1,200 u/d', cost: '$720/d', rec: '30-day protected supply buffer against port strikes' },
+          { sku: 'PROD_002', cat: 'Consumer Electronics', stock: 12000, capPct: '30.0%', turn: '340 u/d', cost: '$720/d', rec: 'Maximum overseas import buffer' },
+          { sku: 'PROD_003', cat: 'Household Goods', stock: 8000, capPct: '20.0%', turn: '680 u/d', cost: '$1,010/d', rec: 'Domestic rail contingency inventory' }
+        ]
+      }
+    };
+
+    let activeScenarioKey = 'balanced';
+
+    function updateWarehouseScenariosView() {
+      const scen = WAREHOUSE_SCENARIOS[activeScenarioKey];
+      document.getElementById('current-wh-scenario-label').innerText = `Active Scenario: ${scen.name}`;
+      const tbody = document.getElementById('wh-sku-tbody');
+      tbody.innerHTML = '';
+
+      scen.skus.forEach(s => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-3 font-bold text-white">${s.sku}</td>
+            <td class="p-3 text-slate-400">${s.cat}</td>
+            <td class="p-3 font-bold text-cyan-400">${s.stock.toLocaleString()} units</td>
+            <td class="p-3 text-purple-300 font-semibold">${s.capPct}</td>
+            <td class="p-3 text-slate-300">${s.turn}</td>
+            <td class="p-3 text-slate-400">${s.cost}</td>
+            <td class="p-3 text-emerald-400 font-semibold">${s.rec}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function applyWarehouseScenario(key) {
+      activeScenarioKey = key;
+      ['balanced', 'holiday', 'jit', 'resilient'].forEach(k => {
+        const btn = document.getElementById('btn-scen-' + k);
+        if (k === key) {
+          btn.className = 'p-4 rounded-xl border border-purple-500/50 bg-purple-500/20 text-left transition hover:scale-105';
+        } else {
+          btn.className = 'p-4 rounded-xl border arrakis-border bg-slate-900/60 text-left transition hover:scale-105';
+        }
+      });
+      updateWarehouseScenariosView();
+      showInboundArrivalToast('Warehouse Strategy Reconfigured', `Assortment policy updated to "${WAREHOUSE_SCENARIOS[key].name}". SKU allocation recomputed.`, 'Policy Optimal');
+    }
+
+    // ================= INTER-WAREHOUSE TRANSSHIPMENT =================
+    function submitTransshipment() {
+      const fromWh = document.getElementById('trans-from-select').value;
+      const toWh = document.getElementById('trans-to-select').value;
+      const qty = parseInt(document.getElementById('trans-qty-input').value) || 2500;
+
+      transshipMission.active = true;
+      transshipMission.fromWh = fromWh;
+      transshipMission.toWh = toWh;
+      transshipMission.units = qty;
+      transshipMission.progress = 0.05;
+
+      showInboundArrivalToast('Transshipment En Route', `Dispatched heavy-haul transshipment truck from ${fromWh} ➔ ${toWh} along shortest grand highway corridor.`, `+${qty.toLocaleString()} Units`);
+      switchWorkspaceView('map');
     }
 
     // ================= MAP RENDERING ENGINE =================
@@ -789,24 +1187,48 @@ WEB_HTML = r"""<!DOCTYPE html>
         });
       }
 
-      // 4. Inter-Warehouse Transshipment Arteries & Cargo Truck
+      // 4. Shopkeeper On-Demand Delivery Corridor
+      const shopDeliveryLayer = document.getElementById('shopkeeper-delivery-layer');
+      shopDeliveryLayer.innerHTML = '';
+      if (shopkeeperDelivery.active) {
+        const whPos = getNodePos(shopkeeperDelivery.fromWh);
+        const stPos = getNodePos(shopkeeperDelivery.toStore);
+        const t = shopkeeperDelivery.progress;
+        const curPos = {
+          x: whPos.x + (stPos.x - whPos.x) * t,
+          y: whPos.y + (stPos.y - whPos.y) * t
+        };
+
+        shopDeliveryLayer.innerHTML = `
+          <!-- Shortest Path Laser Corridor -->
+          <line x1="${whPos.x}" y1="${whPos.y}" x2="${stPos.x}" y2="${stPos.y}" stroke="#06B6D4" stroke-width="5" opacity="0.3" filter="url(#glow-cyan)" />
+          <line class="delivery-beam" x1="${whPos.x}" y1="${whPos.y}" x2="${stPos.x}" y2="${stPos.y}" stroke="#38BDF8" stroke-width="2.5" />
+          <!-- Direct Delivery Truck -->
+          <g transform="translate(${curPos.x}, ${curPos.y})">
+            <circle cx="0" cy="0" r="14" fill="#0C4A6E" stroke="#0284C7" stroke-width="2" filter="url(#glow-cyan)" />
+            <text x="0" y="4" fill="#FFFFFF" font-size="11" text-anchor="middle">🚚</text>
+            <rect x="-35" y="16" width="70" height="15" rx="3" fill="#082F49" stroke="#0284C7" stroke-width="1" />
+            <text x="0" y="27" fill="#7DD3FC" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">STORE REPLENISH</text>
+          </g>
+        `;
+      }
+
+      // 5. Inter-Warehouse Transshipment Laser
       const transshipLayer = document.getElementById('transship-layer');
       transshipLayer.innerHTML = '';
       if (transshipMission.active) {
         const fromPos = getNodePos(transshipMission.fromWh);
         const toPos = getNodePos(transshipMission.toWh);
         const t = transshipMission.progress;
-        const truckPos = {
+        const curPos = {
           x: fromPos.x + (toPos.x - fromPos.x) * t,
           y: fromPos.y + (toPos.y - fromPos.y) * t
         };
 
         transshipLayer.innerHTML = `
-          <!-- Glowing Transshipment Pipeline -->
           <line x1="${fromPos.x}" y1="${fromPos.y}" x2="${toPos.x}" y2="${toPos.y}" stroke="#10B981" stroke-width="4" opacity="0.3" filter="url(#glow-emerald)" />
           <line class="transship-beam" x1="${fromPos.x}" y1="${fromPos.y}" x2="${toPos.x}" y2="${toPos.y}" stroke="#34D399" stroke-width="2.5" />
-          <!-- Heavy Haul Inter-Hub Truck -->
-          <g transform="translate(${truckPos.x}, ${truckPos.y})">
+          <g transform="translate(${curPos.x}, ${curPos.y})">
             <circle cx="0" cy="0" r="14" fill="#064E3B" stroke="#10B981" stroke-width="2" filter="url(#glow-emerald)" />
             <text x="0" y="4" fill="#FFFFFF" font-size="11" text-anchor="middle">📦</text>
             <rect x="-35" y="16" width="70" height="15" rx="3" fill="#022C22" stroke="#10B981" stroke-width="1" />
@@ -815,7 +1237,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       }
 
-      // 5. Dynamic Rescue Laser Corridor (Origin ➔ Breakdown ➔ Store)
+      // 6. Dynamic Rescue Laser Corridor (Shortest Path Failover)
       const rescueLayer = document.getElementById('rescue-layer');
       rescueLayer.innerHTML = '';
       if (rescueMission.active && rescueMission.breakdownPos) {
@@ -829,7 +1251,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       }
 
-      // 6. Pinned Stores Layer
+      // 7. Pinned Stores Layer
       const storesLayer = document.getElementById('stores-layer');
       storesLayer.innerHTML = '';
       STORES.forEach(st => {
@@ -848,7 +1270,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       });
 
-      // 7. Pinned Warehouses Layer & Docking Bays
+      // 8. Pinned Warehouses Layer & Docking Bays
       const warehousesLayer = document.getElementById('warehouses-layer');
       warehousesLayer.innerHTML = '';
       WAREHOUSES.forEach(wh => {
@@ -863,7 +1285,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       });
 
-      // 8. Trucks Layer (Moving + Parked Docks)
+      // 9. Trucks Layer
       const trucksLayer = document.getElementById('trucks-layer');
       trucksLayer.innerHTML = '';
 
@@ -883,7 +1305,7 @@ WEB_HTML = r"""<!DOCTYPE html>
 
         if (trk.status === 'BROKEN_DOWN') {
           trucksLayer.innerHTML += `
-            <g class="cursor-pointer pulse-danger" onmouseenter="showTooltip(event, '⚠️ ${trk.id} [BROKEN DOWN]', 'Driver: ${trk.driver}<br/>Incident: Powertrain Failure<br/>Stranded Cargo: ${trk.cargo} units<br/>Assigned Rescuer: ${rescueMission.rescuerTruckId || 'Computing nearest...'}')" onmouseleave="hideTooltip()">
+            <g class="cursor-pointer pulse-danger" onmouseenter="showTooltip(event, '⚠️ ${trk.id} [BROKEN DOWN]', 'Driver: ${trk.driver}<br/>Incident: Powertrain Failure<br/>Stranded Cargo: ${trk.cargo} units<br/>Assigned Rescuer: ${rescueMission.rescuerTruckId || 'Computing shortest path...'}')" onmouseleave="hideTooltip()">
               <circle cx="${pos.x}" cy="${pos.y}" r="22" fill="none" stroke="#EF4444" stroke-width="2" opacity="0.8" />
               <circle cx="${pos.x}" cy="${pos.y}" r="14" fill="#7F1D1D" stroke="#EF4444" stroke-width="2.5" />
               <text x="${pos.x}" y="${pos.y + 5}" fill="#FFFFFF" font-size="12" text-anchor="middle">⚠️</text>
@@ -896,7 +1318,7 @@ WEB_HTML = r"""<!DOCTYPE html>
 
         if (trk.status === 'RESCUING') {
           trucksLayer.innerHTML += `
-            <g class="cursor-pointer" onmouseenter="showTooltip(event, '🚨 ${trk.id} [DYNAMIC RESCUER]', 'Driver: ${trk.driver}<br/>Mission: Salvage cargo from ${rescueMission.brokenTruckId}<br/>Speed: 70 km/h (Emergency Surcharge Active)')" onmouseleave="hideTooltip()">
+            <g class="cursor-pointer" onmouseenter="showTooltip(event, '🚨 ${trk.id} [SHORTEST-PATH RESCUER]', 'Driver: ${trk.driver}<br/>Mission: Salvage cargo from ${rescueMission.brokenTruckId}<br/>Dynamic Shortest VRP Path: Active')" onmouseleave="hideTooltip()">
               <circle cx="${pos.x}" cy="${pos.y}" r="16" fill="#78350F" stroke="#F59E0B" stroke-width="2" filter="url(#glow-gold)" />
               <text x="${pos.x}" y="${pos.y + 5}" fill="#FFFFFF" font-size="11" text-anchor="middle">🚚</text>
               <rect x="${pos.x - 30}" y="${pos.y + 19}" width="60" height="16" rx="4" fill="#451A03" stroke="#F59E0B" stroke-width="1" />
@@ -908,7 +1330,7 @@ WEB_HTML = r"""<!DOCTYPE html>
 
         // Active Moving Truck
         trucksLayer.innerHTML += `
-          <g class="cursor-pointer transition hover:scale-125" onclick="triggerTruckBreakdown('${trk.id}')" onmouseenter="showTooltip(event, '${trk.id} [IN TRANSIT]', 'Driver: ${trk.driver}<br/>Speed: ${trk.speed} km/h<br/>Cargo: ${trk.cargo} units<br/>Click to simulate breakdown on this truck!')" onmouseleave="hideTooltip()">
+          <g class="cursor-pointer transition hover:scale-125" onclick="triggerTruckBreakdown('${trk.id}')" onmouseenter="showTooltip(event, '${trk.id} [IN TRANSIT]', 'Driver: ${trk.driver}<br/>Speed: ${trk.speed} km/h<br/>Cargo: ${trk.cargo} units<br/>Shortest Route Corridor: Active<br/>Click to simulate breakdown on this truck!')" onmouseleave="hideTooltip()">
             <circle cx="${pos.x}" cy="${pos.y}" r="11" fill="#082F49" stroke="${trk.pathColor || '#06B6D4'}" stroke-width="2" filter="url(#glow-cyan)" />
             <text x="${pos.x}" y="${pos.y + 4}" fill="#FFFFFF" font-size="9" text-anchor="middle">🚚</text>
             <rect x="${pos.x - 22}" y="${pos.y + 14}" width="44" height="12" rx="3" fill="#031525" stroke="#0284C7" stroke-width="0.8" />
@@ -922,7 +1344,7 @@ WEB_HTML = r"""<!DOCTYPE html>
     function startAnimationLoop() {
       function frame() {
         if (isPlaying) {
-          // 1. Advance regular trucks
+          // Regular trucks
           trucks.forEach(t => {
             if (t.status === 'IN_TRANSIT') {
               t.progress += 0.003;
@@ -930,28 +1352,49 @@ WEB_HTML = r"""<!DOCTYPE html>
             } else if (t.status === 'RESCUING') {
               t.progress += 0.005;
               if (t.progress >= 1.0) {
-                // Completed rescue mission
                 t.status = 'PARKED';
                 t.progress = 0;
                 rescueMission.active = false;
                 document.getElementById('header-fill-rate').innerText = '98.2%';
                 document.getElementById('kpi-fill').innerText = '98.2%';
                 document.getElementById('kpi-unmet').innerText = '0 units';
-                showInboundArrivalToast('Mission Success: Cargo Salvaged', `${t.id} (${t.driver}) successfully salvaged and delivered stranded cargo to store. Stockout prevented!`, '0 Penalties');
+                showInboundArrivalToast('Mission Success: Cargo Salvaged', `${t.id} (${t.driver}) successfully salvaged and delivered stranded cargo along shortest path.`, '0 Penalties');
               }
             }
           });
 
-          // 2. Advance inter-warehouse transshipment if active
+          // Shopkeeper Delivery Truck
+          if (shopkeeperDelivery.active) {
+            shopkeeperDelivery.progress += 0.006;
+            if (shopkeeperDelivery.progress >= 1.0) {
+              shopkeeperDelivery.active = false;
+              shopkeeperDelivery.progress = 0.0;
+              // Increment store shelf inventory
+              const st = STORES.find(s => s.id === shopkeeperDelivery.toStore);
+              if (st) st.inventory += shopkeeperDelivery.qty;
+              const prods = STORE_PRODUCTS[shopkeeperDelivery.toStore];
+              if (prods) {
+                const p = prods.find(x => x.sku === shopkeeperDelivery.sku);
+                if (p) {
+                  p.stock += shopkeeperDelivery.qty;
+                  p.status = 'HEALTHY';
+                  p.recOrder = 0;
+                }
+              }
+              showInboundArrivalToast(`Order Delivered to ${shopkeeperDelivery.toStore}`, `Shopkeeper received ${shopkeeperDelivery.qty} units of ${shopkeeperDelivery.sku}. Shelf stock fully restored!`, `+${shopkeeperDelivery.qty} Units In Store`);
+              updateShopkeeperStoreView();
+            }
+          }
+
+          // Transshipment Truck
           if (transshipMission.active) {
             transshipMission.progress += transshipMission.speed;
             if (transshipMission.progress >= 1.0) {
               transshipMission.active = false;
               transshipMission.progress = 0;
-              // Add units to destination warehouse
               const destWh = WAREHOUSES.find(w => w.id === transshipMission.toWh);
               if (destWh) destWh.inventory += transshipMission.units;
-              showInboundArrivalToast('Inter-Warehouse Transshipment Arrived', `${transshipMission.units.toLocaleString()} units received at ${transshipMission.toWh} Depot from ${transshipMission.fromWh}.`, `+${transshipMission.units.toLocaleString()} Units`);
+              showInboundArrivalToast('Transshipment Arrived at Hub', `${transshipMission.units.toLocaleString()} units received at ${transshipMission.toWh} Depot along shortest highway corridor.`, `+${transshipMission.units.toLocaleString()} Units`);
             }
           }
         }
@@ -962,8 +1405,7 @@ WEB_HTML = r"""<!DOCTYPE html>
       animFrameId = requestAnimationFrame(frame);
     }
 
-    // ================= DYNAMIC NEAREST-TRUCK RESCUE LOGIC =================
-    // Evaluates Euclidean distance across ALL available trucks to find the closest one
+    // ================= DYNAMIC SHORTEST PATH RESCUE =================
     function triggerTruckBreakdown(truckId) {
       const target = trucks.find(t => t.id === truckId);
       if (!target || target.status === 'BROKEN_DOWN') return;
@@ -972,16 +1414,25 @@ WEB_HTML = r"""<!DOCTYPE html>
       target.status = 'BROKEN_DOWN';
       target.speed = 0;
 
-      // 1. Calculate distance from breakdown position to all candidate trucks
+      // Calculate shortest distance to find best rescuer
       let nearestCandidate = null;
-      let minDistance = 999999;
+      let minTotalDistance = 999999;
+
+      let targetStore = 'STORE_04';
+      if (target.stops && target.stops.length > 1) {
+        const candidateStore = target.stops.find(s => s.startsWith('STORE'));
+        if (candidateStore) targetStore = candidateStore;
+      }
+      const storePos = getNodePos(targetStore);
 
       trucks.forEach(t => {
         if (t.id === truckId || t.status === 'BROKEN_DOWN') return;
         const p = getTruckCurrentPos(t);
-        const dist = Math.hypot(p.x - brkPos.x, p.y - brkPos.y);
-        if (dist < minDistance) {
-          minDistance = dist;
+        const distToBrk = Math.hypot(p.x - brkPos.x, p.y - brkPos.y);
+        const distToStore = Math.hypot(brkPos.x - storePos.x, brkPos.y - storePos.y);
+        const totalDist = distToBrk + distToStore;
+        if (totalDist < minTotalDistance) {
+          minTotalDistance = totalDist;
           nearestCandidate = t;
         }
       });
@@ -989,14 +1440,8 @@ WEB_HTML = r"""<!DOCTYPE html>
       if (!nearestCandidate) nearestCandidate = trucks.find(t => t.id === 'TRUCK_04') || trucks[3];
 
       const rescuerPos = getTruckCurrentPos(nearestCandidate);
-      const distKm = Math.round(minDistance * 0.18 + 5);
-
-      // Determine target store to deliver cargo
-      let targetStore = 'STORE_04';
-      if (target.stops && target.stops.length > 1) {
-        const candidateStore = target.stops.find(s => s.startsWith('STORE'));
-        if (candidateStore) targetStore = candidateStore;
-      }
+      const distKm = Math.round(minTotalDistance * 0.18 + 5);
+      const fuelCost = (distKm * 1.25).toFixed(2);
 
       rescueMission.active = true;
       rescueMission.brokenTruckId = truckId;
@@ -1005,17 +1450,15 @@ WEB_HTML = r"""<!DOCTYPE html>
       rescueMission.targetStoreId = targetStore;
       rescueMission.originPos = rescuerPos;
 
-      // 2. Update Alert UI
       document.getElementById('driver-dispatch-modal').classList.remove('hidden');
       document.getElementById('disr-badge').classList.remove('hidden');
       document.getElementById('alert-headline').innerText = `Breakdown on ${truckId} (${target.driver})`;
       document.getElementById('alert-driver-desc').innerHTML = `
-        <strong>Dynamic Nearest Rescuer Found:</strong> <strong class="text-amber-300">${nearestCandidate.driver} (${nearestCandidate.id})</strong> is ${distKm} km away.<br/>
-        <strong>Dispatch Instructions Issued:</strong> Reroute ${nearestCandidate.id} ➔ Salvage ${target.cargo || 340} units from ${truckId} ➔ Deliver to ${targetStore}.
+        <strong>Dynamic Shortest Path Computed:</strong> Nearest rescuer is <strong class="text-amber-300">${nearestCandidate.driver} (${nearestCandidate.id})</strong>.<br/>
+        <strong>Optimal Distance:</strong> ${distKm} km (Fuel: $${fuelCost}) ➔ Salvage ${target.cargo || 340} units from ${truckId} ➔ Deliver to ${targetStore}.
       `;
-      document.getElementById('alert-dispatch-btn').innerText = `Dispatch Nearest Rescuer (${nearestCandidate.id})`;
+      document.getElementById('alert-dispatch-btn').innerText = `Dispatch Shortest Rescuer (${nearestCandidate.id})`;
 
-      // 3. Update KPIs
       document.getElementById('header-fill-rate').innerText = '91.4%';
       document.getElementById('kpi-fill').innerText = '91.4%';
       document.getElementById('kpi-stockout').innerText = '4.8%';
@@ -1038,7 +1481,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         rescuer.progress = 0.05;
         rescuer.speed = 70;
       }
-      showInboundArrivalToast('Emergency Rescuer Dispatched', `${rescuerId} en route along dynamic golden corridor to intercept cargo.`, '+$8,355 Saved');
+      showInboundArrivalToast('Shortest-Path Rescuer En Route', `${rescuerId} dispatched along optimal cost-minimized failover corridor.`, '+$8,355 Saved');
       renderMap();
     }
 
@@ -1051,6 +1494,7 @@ WEB_HTML = r"""<!DOCTYPE html>
       rescueMission.brokenTruckId = null;
       rescueMission.rescuerTruckId = null;
       transshipMission.active = false;
+      shopkeeperDelivery.active = false;
 
       trucks = [
         { id: 'TRUCK_01', driver: 'Marcus Vance', status: 'IN_TRANSIT', progress: 0.35, speed: 55, cargo: 380, cluster: 0, pathColor: '#06B6D4', stops: ['WH_01', 'STORE_01', 'STORE_03', 'WH_01'] },
@@ -1080,53 +1524,13 @@ WEB_HTML = r"""<!DOCTYPE html>
       showAllTruckPaths = !showAllTruckPaths;
       const btn = document.getElementById('routes-toggle-btn');
       if (showAllTruckPaths) {
-        btn.innerText = '🛣️ All Truck Paths: ON';
-        btn.className = 'rounded-xl border border-cyan-500/40 bg-cyan-500/15 hover:bg-cyan-500/25 px-3.5 py-2.5 text-xs font-mono font-semibold text-cyan-300 transition';
+        btn.innerText = '🛣️ Paths: ON';
+        btn.className = 'rounded-xl border border-cyan-500/40 bg-cyan-500/15 hover:bg-cyan-500/25 px-3 py-1.5 text-xs font-mono font-semibold text-cyan-300 transition';
       } else {
-        btn.innerText = '🛣️ All Truck Paths: OFF';
-        btn.className = 'rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-mono font-semibold text-slate-400 transition';
+        btn.innerText = '🛣️ Paths: OFF';
+        btn.className = 'rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-mono font-semibold text-slate-400 transition';
       }
       renderMap();
-    }
-
-    // ================= RECOMMENDATION EXECUTION ENGINES =================
-    function executeStoreReplenishment(storeId, qty) {
-      const store = STORES.find(s => s.id === storeId);
-      if (store) store.inventory += qty;
-      showInboundArrivalToast(`Store Replenishment Dispatched: ${storeId}`, `Dispatched ${qty} units from WH_01 to ${storeId}. Stock restored above reorder threshold.`, `+${qty} Units`);
-      document.getElementById('btn-store-order').innerText = '✓ Order In Transit';
-      document.getElementById('btn-store-order').className = 'w-full rounded-lg bg-emerald-600/30 text-emerald-300 py-2 text-center text-xs font-bold border border-emerald-500/40';
-      renderMap();
-    }
-
-    function executeWarehousePO(whId, qty) {
-      showInboundArrivalToast(`Factory Supplier PO Placed`, `Purchase order for ${qty.toLocaleString()} units issued for ${whId} Depot. Scheduled for inbound arrival in 2 ticks.`, 'Inbound Transit Active');
-      document.getElementById('btn-wh-po').innerText = '✓ Inbound PO Confirmed';
-      document.getElementById('btn-wh-po').className = 'w-full rounded-lg bg-purple-600/30 text-purple-300 py-2 text-center text-xs font-bold border border-purple-500/40';
-    }
-
-    function executeInterWarehouseTransshipment(fromWh, toWh, qty) {
-      transshipMission.active = true;
-      transshipMission.fromWh = fromWh;
-      transshipMission.toWh = toWh;
-      transshipMission.units = qty;
-      transshipMission.progress = 0.0;
-      showInboundArrivalToast('Transshipment Carrier En Route', `Transshipping ${qty.toLocaleString()} units from ${fromWh} ➔ ${toWh} along grand highway artery.`, '+$6,010 Net Gain');
-      document.getElementById('btn-transship').innerText = '✓ Carrier In Transit';
-      document.getElementById('btn-transship').className = 'w-full rounded-lg bg-emerald-600/30 text-emerald-300 py-2 text-center text-xs font-bold border border-emerald-500/40';
-      renderMap();
-    }
-
-    function executePreOccasionBufferBuild(qty) {
-      // Ramp safety stock buffer
-      const wh = WAREHOUSES[0]; // WH_01
-      wh.inventory += qty;
-      document.getElementById('p90-disp').innerText = '38.4 u/day (+140% Buffer)';
-      document.getElementById('p90-disp').className = 'text-amber-300 font-bold';
-      showInboundArrivalToast('Pre-Occasion Buffer Authorized', `Pre-built ${qty.toLocaleString()} units buffer for Holiday Promotion Surge. Stockout probability reduced to 0.0%.`, '+1,200 Buffer Secured');
-      document.getElementById('btn-occasion').innerText = '✓ Buffer Pre-Built';
-      document.getElementById('btn-occasion').className = 'w-full rounded-lg bg-amber-500/30 text-amber-300 py-2 text-center text-xs font-bold border border-amber-500/40';
-      initNativeCharts(true); // Redraw with surge
     }
 
     function showInboundArrivalToast(title, desc, delta) {
@@ -1138,24 +1542,6 @@ WEB_HTML = r"""<!DOCTYPE html>
       setTimeout(() => { toast.classList.add('hidden'); }, 6000);
     }
 
-    function setRecCategory(cat) {
-      ['all', 'store', 'warehouse', 'transship', 'occasion'].forEach(c => {
-        const btn = document.getElementById('rec-cat-' + c);
-        if (c === cat) {
-          btn.className = 'px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30';
-        } else {
-          btn.className = 'px-2.5 py-1 rounded text-slate-400 hover:text-white';
-        }
-      });
-      document.querySelectorAll('.rec-card').forEach(card => {
-        if (cat === 'all' || card.classList.contains('rec-type-' + cat)) {
-          card.classList.remove('hidden');
-        } else {
-          card.classList.add('hidden');
-        }
-      });
-    }
-
     // ================= SIMULATION PLAY / STEP / RESET =================
     function togglePlay() {
       isPlaying = !isPlaying;
@@ -1164,13 +1550,13 @@ WEB_HTML = r"""<!DOCTYPE html>
       const icon = document.getElementById('play-icon');
 
       if (isPlaying) {
-        text.innerText = 'Pause Simulation';
+        text.innerText = 'Pause Twin';
         icon.innerText = '⏸';
-        btn.className = 'rounded-xl bg-amber-500 hover:bg-amber-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5';
+        btn.className = 'rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-1.5 font-bold text-xs text-slate-950 transition flex items-center gap-1';
       } else {
-        text.innerText = 'Run Live Twin';
+        text.innerText = 'Run Twin';
         icon.innerText = '▶';
-        btn.className = 'rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 font-bold text-xs text-slate-950 shadow-lg shadow-cyan-500/20 transition flex items-center gap-1.5';
+        btn.className = 'rounded-xl bg-cyan-500 hover:bg-cyan-400 px-4 py-1.5 font-bold text-xs text-slate-950 transition flex items-center gap-1';
       }
     }
 
@@ -1222,18 +1608,6 @@ WEB_HTML = r"""<!DOCTYPE html>
       await fetch('/api/simulation/reset', { method: 'POST' }).catch(() => {});
     }
 
-    function toggleOptimizer() {
-      optimizerEnabled = !optimizerEnabled;
-      const btn = document.getElementById('opt-toggle');
-      if (optimizerEnabled) {
-        btn.innerText = 'MILP + P90 Buffer: ON';
-        btn.className = 'rounded-xl border border-purple-500/40 bg-purple-500/15 hover:bg-purple-500/25 px-3.5 py-2.5 text-xs font-mono font-semibold text-purple-200 transition';
-      } else {
-        btn.innerText = 'Baseline (s, S): ON';
-        btn.className = 'rounded-xl border arrakis-border bg-slate-900 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-mono font-semibold text-slate-400 transition';
-      }
-    }
-
     const VIEWBOX_TARGETS = {
       'all': '0 0 1000 520',
       0: '620 10 320 290',
@@ -1256,44 +1630,6 @@ WEB_HTML = r"""<!DOCTYPE html>
       renderMap();
     }
 
-    // ================= 8-STAGE GUIDED TOUR ENGINE =================
-    const TOUR_STAGES = [
-      { code: 'STAGE A', title: 'Stage A: Healthy Digital Twin (Baseline Operations)', desc: '3 regional hubs, 20 retail stores, and 10 trucks operating at 98.5% OTIF with baseline (s,S) replenishment.', action: 'Inspect Full Network', fn: () => setMapCluster('all') },
-      { code: 'STAGE B', title: 'Stage B: Occasion Demand Surge Detection', desc: 'LightGBM model predicts +140% demand surge for Holiday Rush. Pre-buffer recommendation triggers.', action: 'Authorize Pre-Occasion Buffer', fn: () => executePreOccasionBufferBuild(1200) },
-      { code: 'STAGE C', title: 'Stage C: Inter-Warehouse Stock Balancing', desc: 'Midwest Hub WH_02 transships 2,500 surplus units to Northeast Hub WH_01 to equalize regional stock.', action: 'Execute Transshipment', fn: () => executeInterWarehouseTransshipment('WH_02', 'WH_01', 2500) },
-      { code: 'STAGE D', title: 'Stage D: Inject Random Truck Breakdown', desc: 'Simulate powertrain failure on in-transit truck. Real-time diagnostic triggers dynamic failover search.', action: 'Trigger Breakdown Shock', fn: () => triggerTruckBreakdown('TRUCK_03') },
-      { code: 'STAGE E', title: 'Stage E: Dynamic Nearest-Neighbor Rescue', desc: 'Calculates nearest available truck across all vehicles and issues dynamic rerouting instructions to driver.', action: 'Dispatch Nearest Rescuer', fn: () => approveCurrentRecommendation() },
-      { code: 'STAGE F', title: 'Stage F: Store-Level Replenishment ("Should He Order?")', desc: 'Autonomous inventory engine alerts Store #04 is below reorder threshold and executes supplier replenishment.', action: 'Approve Store Order', fn: () => executeStoreReplenishment('STORE_04', 160) },
-      { code: 'STAGE G', title: 'Stage G: Strategy Comparison Lab', desc: 'Run 10 paired seeds under Common Random Numbers. Student t-test proves p < 0.001 with 95% CI.', action: 'Run Monte Carlo Lab', fn: () => runMonteCarloLab() },
-      { code: 'STAGE H', title: 'Stage H: Deterministic Reset & Replay', desc: 'Deterministic reset back to Tick 0. All inventory, fleet positions, and CRN generators restore predictably.', action: 'Reset Digital Twin', fn: () => resetSimulation() },
-    ];
-
-    function selectTourStage(idx) {
-      currentTourIdx = idx;
-      const s = TOUR_STAGES[idx];
-      document.getElementById('tour-step-badge').innerText = `Stage ${idx + 1} of 8: ${s.code}`;
-      document.getElementById('tour-title').innerText = s.title;
-      document.getElementById('tour-desc').innerText = s.desc;
-      document.getElementById('tour-action-btn').innerText = s.action;
-
-      for (let i = 0; i < 8; i++) {
-        const btn = document.getElementById('tour-btn-' + i);
-        if (i === idx) {
-          btn.className = 'rounded-xl border border-cyan-400 bg-cyan-500/20 p-2 text-left transition hover:scale-105';
-          btn.querySelector('p').className = 'font-mono text-[9px] font-bold text-cyan-300';
-        } else {
-          btn.className = 'rounded-xl border arrakis-border bg-slate-900/60 p-2 text-left transition hover:scale-105';
-          btn.querySelector('p').className = 'font-mono text-[9px] font-bold text-slate-400';
-        }
-      }
-    }
-
-    function executeCurrentTourAction() {
-      const s = TOUR_STAGES[currentTourIdx];
-      if (s.fn) s.fn();
-      if (currentTourIdx < 7) selectTourStage(currentTourIdx + 1);
-    }
-
     // ================= TOOLTIP SYSTEM =================
     function showTooltip(evt, title, html) {
       const tt = document.getElementById('node-telemetry-tooltip');
@@ -1312,7 +1648,7 @@ WEB_HTML = r"""<!DOCTYPE html>
     }
 
     // ================= NATIVE CANVAS CHARTS ENGINE =================
-    function initNativeCharts(hasSurge = false) {
+    function initNativeCharts() {
       const fc = document.getElementById('forecastCanvas');
       if (fc) {
         fc.width = fc.parentElement.clientWidth * window.devicePixelRatio;
@@ -1335,20 +1671,14 @@ WEB_HTML = r"""<!DOCTYPE html>
         }
 
         const labels = ['T-4', 'T-3', 'T-2', 'T-1', 'Now', 'T+1', 'T+2', 'T+3', 'T+4', 'T+5', 'T+6', 'T+7'];
-        const p90 = hasSurge
-          ? [null, null, null, null, 18, 25, 29, 34, 38, 40, 39, 38]
-          : [null, null, null, null, 18, 22, 24, 26, 27, 28, 27, 28];
-        const p50 = hasSurge
-          ? [null, null, null, null, 18, 22, 25, 28, 30, 31, 30, 29]
-          : [null, null, null, null, 18, 19, 18, 20, 19, 21, 20, 21];
+        const p90 = [null, null, null, null, 18, 22, 24, 26, 27, 28, 27, 28];
+        const p50 = [null, null, null, null, 18, 19, 18, 20, 19, 21, 20, 21];
         const p10 = [null, null, null, null, 18, 15, 14, 15, 14, 15, 14, 15];
         const hist = [16, 17, 19, 18, 18, null, null, null, null, null, null, null];
 
         const xStep = (w - 70) / (labels.length - 1);
-        const maxY = hasSurge ? 45 : 32;
-        const getY = (val) => h - 40 - ((val - 10) / (maxY - 10)) * (h - 70);
+        const getY = (val) => h - 40 - ((val - 10) / 22) * (h - 70);
 
-        // Uncertainty Fan
         ctx.beginPath();
         for (let i = 4; i < labels.length; i++) {
           const x = 50 + i * xStep;
@@ -1361,11 +1691,10 @@ WEB_HTML = r"""<!DOCTYPE html>
           ctx.lineTo(x, y);
         }
         ctx.closePath();
-        ctx.fillStyle = hasSurge ? 'rgba(245, 158, 11, 0.22)' : 'rgba(139, 92, 246, 0.18)';
+        ctx.fillStyle = 'rgba(139, 92, 246, 0.18)';
         ctx.fill();
 
-        // P90 Line
-        ctx.strokeStyle = hasSurge ? '#F59E0B' : '#8B5CF6';
+        ctx.strokeStyle = '#8B5CF6';
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
@@ -1376,7 +1705,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         }
         ctx.stroke();
 
-        // P50 Line
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2.5;
         ctx.setLineDash([]);
@@ -1388,7 +1716,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         }
         ctx.stroke();
 
-        // P10 Line
         ctx.strokeStyle = '#06B6D4';
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 4]);
@@ -1400,7 +1727,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         }
         ctx.stroke();
 
-        // Historical
         ctx.strokeStyle = '#10B981';
         ctx.lineWidth = 3;
         ctx.setLineDash([]);
@@ -1419,7 +1745,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         });
       }
 
-      // 2. Strategy Canvas
       const sc = document.getElementById('strategyCanvas');
       if (sc) {
         sc.width = sc.parentElement.clientWidth * window.devicePixelRatio;
@@ -1497,6 +1822,8 @@ WEB_HTML = r"""<!DOCTYPE html>
       renderMap();
       startAnimationLoop();
       initNativeCharts();
+      updateShopkeeperStoreView();
+      updateWarehouseScenariosView();
     });
 
     window.addEventListener('resize', () => {
