@@ -15,7 +15,7 @@ WEB_HTML = r"""<!DOCTYPE html>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEXUS — Supply Chain Intelligence & Disruption Digital Twin</title>
-  <!-- Tailwind CSS CDN with full native fallback styling -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
@@ -44,12 +44,12 @@ WEB_HTML = r"""<!DOCTYPE html>
     }
     .arrakis-border { border-color: var(--card-border); }
     .pulse-danger {
-      animation: pulseDanger 1.5s infinite;
+      animation: pulseDanger 1.4s infinite;
     }
     @keyframes pulseDanger {
-      0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 4px #ef4444); }
-      50% { transform: scale(1.15); opacity: 0.8; filter: drop-shadow(0 0 16px #ef4444); }
-      100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 4px #ef4444); }
+      0% { transform: scale(1); filter: drop-shadow(0 0 4px #ef4444); }
+      50% { transform: scale(1.18); filter: drop-shadow(0 0 16px #ef4444); }
+      100% { transform: scale(1); filter: drop-shadow(0 0 4px #ef4444); }
     }
     .rescue-beam {
       stroke-dasharray: 8 6;
@@ -306,18 +306,18 @@ WEB_HTML = r"""<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- 6. GEOGRAPHIC FLEET ROUTING & DYNAMIC FAILOVER MAP (SELF-CONTAINED SVG/CANVAS ENGINE) -->
+    <!-- 6. GEOGRAPHIC FLEET ROUTING & DYNAMIC FAILOVER MAP (FULLY SCATTERED NON-OVERLAPPING VECTOR MAP) -->
     <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b arrakis-border pb-3">
         <div>
           <div class="flex items-center gap-2">
             <h3 class="text-sm font-bold text-white">Geographic Fleet Routing & Dynamic Failover Map</h3>
             <span class="rounded bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 font-mono text-[9px] text-cyan-300">
-              [Live Interactive Vector Engine • 3 Hubs • 20 Stores • 10 Trucks]
+              [Spatially Distributed Vector Engine • 3 Hubs • 20 Stores • 10 Trucks]
             </span>
           </div>
           <p class="text-xs text-slate-400 mt-0.5">
-            Real-time VRP route simulation with 7 moving trucks, 3 parked at warehouse docks, and automatic nearest-neighbor rescue failover
+            Spacious, non-overlapping multi-echelon network with 7 moving trucks, 3 parked at warehouse loading docks, and live emergency rerouting
           </p>
         </div>
 
@@ -331,8 +331,8 @@ WEB_HTML = r"""<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- MAP CONTAINER: Zero external tile dependencies, 100% reliable interactive vector map -->
-      <div class="relative w-full h-[460px] rounded-xl overflow-hidden border arrakis-border bg-[#05060A]">
+      <!-- MAP CONTAINER: Generously spaced, fully scattered SVG network -->
+      <div class="relative w-full h-[520px] rounded-xl overflow-hidden border arrakis-border bg-[#05060A]">
         <!-- Map Canvas SVG -->
         <svg id="vector-map" class="w-full h-full select-none" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet">
           <defs>
@@ -349,28 +349,36 @@ WEB_HTML = r"""<!DOCTYPE html>
               <feGaussianBlur stdDeviation="6" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
-            <!-- Radial Gradients -->
+            <!-- Regional Radial Gradient Halos -->
             <radialGradient id="grad-wh1" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.35" />
+              <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.25" />
+              <stop offset="70%" stop-color="#8B5CF6" stop-opacity="0.08" />
               <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
             </radialGradient>
             <radialGradient id="grad-wh2" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.35" />
+              <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.25" />
+              <stop offset="70%" stop-color="#06B6D4" stop-opacity="0.08" />
               <stop offset="100%" stop-color="#06B6D4" stop-opacity="0" />
             </radialGradient>
             <radialGradient id="grad-wh3" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#10B981" stop-opacity="0.35" />
+              <stop offset="0%" stop-color="#10B981" stop-opacity="0.25" />
+              <stop offset="70%" stop-color="#10B981" stop-opacity="0.08" />
               <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
             </radialGradient>
           </defs>
 
           <!-- Background Coordinate Grid -->
-          <g id="grid-lines" stroke="#131826" stroke-width="1" stroke-dasharray="2 4"></g>
+          <g id="grid-lines" stroke="#101524" stroke-width="1" stroke-dasharray="3 4"></g>
 
-          <!-- Region Aura Halos -->
-          <circle cx="780" cy="180" r="140" fill="url(#grad-wh1)" />
-          <circle cx="340" cy="150" r="140" fill="url(#grad-wh2)" />
-          <circle cx="480" cy="400" r="130" fill="url(#grad-wh3)" />
+          <!-- Spacious Regional Territory Halos -->
+          <circle cx="780" cy="160" r="160" fill="url(#grad-wh1)" />
+          <circle cx="240" cy="160" r="160" fill="url(#grad-wh2)" />
+          <circle cx="520" cy="370" r="160" fill="url(#grad-wh3)" />
+
+          <!-- Region Boundary Indicators -->
+          <text x="780" y="325" fill="#8B5CF6" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">NORTHEAST REGION (NYC / NJ)</text>
+          <text x="240" y="325" fill="#06B6D4" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">MIDWEST REGION (CHICAGO)</text>
+          <text x="520" y="505" fill="#10B981" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" opacity="0.6">SOUTHEAST REGION (ATLANTA)</text>
 
           <!-- Regional Highway Corridors -->
           <g id="corridors-layer"></g>
@@ -378,11 +386,11 @@ WEB_HTML = r"""<!DOCTYPE html>
           <!-- Dynamic Rescue Polyline -->
           <g id="rescue-layer"></g>
 
-          <!-- Pinned Warehouses & Docks Layer -->
-          <g id="warehouses-layer"></g>
-
           <!-- Pinned Stores Layer -->
           <g id="stores-layer"></g>
+
+          <!-- Pinned Warehouses & Docks Layer -->
+          <g id="warehouses-layer"></g>
 
           <!-- Animated Moving & Parked Trucks Layer -->
           <g id="trucks-layer"></g>
@@ -398,23 +406,23 @@ WEB_HTML = r"""<!DOCTYPE html>
       <!-- Cluster Filter & Map Legend Bar -->
       <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400 pt-1">
         <div class="flex items-center gap-2">
-          <span class="text-slate-500">ZOOM REGION:</span>
+          <span class="text-slate-500">CAMERA VIEW:</span>
           <button onclick="setMapCluster('all')" id="clust-btn-all" class="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold hover:bg-cyan-500/30 transition">
-            All (US Network)
+            All (Spacious Full Network)
           </button>
           <button onclick="setMapCluster(0)" id="clust-btn-0" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
-            Northeast (NYC Hub)
+            Focus Northeast (NYC)
           </button>
           <button onclick="setMapCluster(1)" id="clust-btn-1" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
-            Midwest (Chicago Hub)
+            Focus Midwest (CHI)
           </button>
           <button onclick="setMapCluster(2)" id="clust-btn-2" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
-            Southeast (Atlanta Hub)
+            Focus Southeast (ATL)
           </button>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-          <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-purple-500 inline-block"></span> 🏭 Warehouse Hub</span>
+          <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-purple-500 inline-block"></span> 🏭 Warehouse Depot</span>
           <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-cyan-400 inline-block"></span> 🏪 Retail Store</span>
           <span class="flex items-center gap-1.5 text-cyan-300"><span class="h-2.5 w-2.5 rounded-full bg-cyan-500 inline-block"></span> 🚚 In Transit (7)</span>
           <span class="flex items-center gap-1.5 text-slate-400"><span class="h-2.5 w-2.5 rounded bg-slate-700 inline-block"></span> 🅿️ Parked at Dock (3)</span>
@@ -483,49 +491,48 @@ WEB_HTML = r"""<!DOCTYPE html>
 
   <!-- ================= JAVASCRIPT SIMULATION LOGIC ================= -->
   <script>
-    // Global State
+    // Global Simulation State
     let currentTick = 0;
     let isPlaying = false;
     let animFrameId = null;
-    let lastTickTime = Date.now();
     let optimizerEnabled = true;
     let currentTourIdx = 0;
     let activeCluster = 'all';
 
-    // 3 Regional Hub Warehouses
+    // 3 Regional Hub Warehouses (Guaranteed Non-Overlapping Coordinates)
     const WAREHOUSES = [
-      { id: 'WH_01', name: 'Northeast Primary Hub (NYC/NJ)', lat: 40.7128, lng: -74.006, cluster: 0, capacity: 40000, inventory: 31200, color: '#8B5CF6' },
-      { id: 'WH_02', name: 'Midwest Logistics Hub (CHI)', lat: 41.8781, lng: -87.6298, cluster: 1, capacity: 45000, inventory: 38400, color: '#06B6D4' },
-      { id: 'WH_03', name: 'Southeast Regional Hub (ATL)', lat: 33.7490, lng: -84.3880, cluster: 2, capacity: 35000, inventory: 24900, color: '#10B981' },
+      { id: 'WH_01', name: 'Northeast Primary Hub (NYC/NJ)', x: 780, y: 160, dockX: 780, dockY: 200, cluster: 0, capacity: 40000, inventory: 31200, color: '#8B5CF6' },
+      { id: 'WH_02', name: 'Midwest Logistics Hub (CHI)', x: 240, y: 160, dockX: 240, dockY: 200, cluster: 1, capacity: 45000, inventory: 38400, color: '#06B6D4' },
+      { id: 'WH_03', name: 'Southeast Regional Hub (ATL)', x: 520, y: 370, dockX: 520, dockY: 410, cluster: 2, capacity: 35000, inventory: 24900, color: '#10B981' },
     ];
 
-    // 20 Retail Stores
+    // 20 Retail Stores (Guaranteed Spatial Distribution, Min Distance > 70px)
     const STORES = [
-      // Cluster 0: Northeast (7 Stores)
-      { id: 'STORE_01', name: 'Manhattan #01', lat: 40.75, lng: -73.98, cluster: 0, demand: 45, inventory: 180 },
-      { id: 'STORE_02', name: 'Brooklyn #02', lat: 40.67, lng: -73.94, cluster: 0, demand: 52, inventory: 140 },
-      { id: 'STORE_03', name: 'Bronx #03', lat: 40.82, lng: -73.92, cluster: 0, demand: 38, inventory: 95 },
-      { id: 'STORE_04', name: 'Newark #04', lat: 40.71, lng: -74.17, cluster: 0, demand: 60, inventory: 110 },
-      { id: 'STORE_05', name: 'Hackensack #05', lat: 40.91, lng: -74.07, cluster: 0, demand: 42, inventory: 85 },
-      { id: 'STORE_06', name: 'Staten Island #06', lat: 40.57, lng: -74.15, cluster: 0, demand: 35, inventory: 160 },
-      { id: 'STORE_07', name: 'Stamford #07', lat: 41.05, lng: -73.54, cluster: 0, demand: 48, inventory: 130 },
+      // Cluster 0: Northeast (7 Stores scattered cleanly around WH_01)
+      { id: 'STORE_01', name: 'Manhattan #01', x: 800, y: 65, cluster: 0, demand: 45, inventory: 180 },
+      { id: 'STORE_02', name: 'Brooklyn #02', x: 885, y: 120, cluster: 0, demand: 52, inventory: 140 },
+      { id: 'STORE_03', name: 'Bronx #03', x: 895, y: 205, cluster: 0, demand: 38, inventory: 95 },
+      { id: 'STORE_04', name: 'Newark #04', x: 695, y: 245, cluster: 0, demand: 60, inventory: 110 }, // Target rescue store
+      { id: 'STORE_05', name: 'Hackensack #05', x: 675, y: 150, cluster: 0, demand: 42, inventory: 85 },
+      { id: 'STORE_06', name: 'Staten Island #06', x: 765, y: 265, cluster: 0, demand: 35, inventory: 160 },
+      { id: 'STORE_07', name: 'Stamford #07', x: 880, y: 50, cluster: 0, demand: 48, inventory: 130 },
 
-      // Cluster 1: Midwest (7 Stores)
-      { id: 'STORE_08', name: 'Chicago Loop #08', lat: 41.88, lng: -87.63, cluster: 1, demand: 55, inventory: 210 },
-      { id: 'STORE_09', name: 'Hyde Park #09', lat: 41.79, lng: -87.59, cluster: 1, demand: 40, inventory: 120 },
-      { id: 'STORE_10', name: 'Albany Park #10', lat: 41.97, lng: -87.71, cluster: 1, demand: 46, inventory: 145 },
-      { id: 'STORE_11', name: 'Evanston #11', lat: 42.04, lng: -87.68, cluster: 1, demand: 50, inventory: 175 },
-      { id: 'STORE_12', name: 'Berwyn #12', lat: 41.83, lng: -87.82, cluster: 1, demand: 36, inventory: 90 },
-      { id: 'STORE_13', name: 'Oak Lawn #13', lat: 41.70, lng: -87.75, cluster: 1, demand: 32, inventory: 130 },
-      { id: 'STORE_14', name: 'Wheaton #14', lat: 41.90, lng: -88.08, cluster: 1, demand: 44, inventory: 160 },
+      // Cluster 1: Midwest (7 Stores scattered cleanly around WH_02)
+      { id: 'STORE_08', name: 'Chicago Loop #08', x: 240, y: 75, cluster: 1, demand: 55, inventory: 210 },
+      { id: 'STORE_09', name: 'Hyde Park #09', x: 325, y: 110, cluster: 1, demand: 40, inventory: 120 },
+      { id: 'STORE_10', name: 'Albany Park #10', x: 335, y: 190, cluster: 1, demand: 46, inventory: 145 },
+      { id: 'STORE_11', name: 'Evanston #11', x: 275, y: 250, cluster: 1, demand: 50, inventory: 175 },
+      { id: 'STORE_12', name: 'Berwyn #12', x: 175, y: 240, cluster: 1, demand: 36, inventory: 90 },
+      { id: 'STORE_13', name: 'Oak Lawn #13', x: 135, y: 170, cluster: 1, demand: 32, inventory: 130 },
+      { id: 'STORE_14', name: 'Wheaton #14', x: 155, y: 90, cluster: 1, demand: 44, inventory: 160 },
 
-      // Cluster 2: Southeast (6 Stores)
-      { id: 'STORE_15', name: 'Downtown Atlanta #15', lat: 33.75, lng: -84.39, cluster: 2, demand: 58, inventory: 190 },
-      { id: 'STORE_16', name: 'Buckhead #16', lat: 33.84, lng: -84.37, cluster: 2, demand: 47, inventory: 155 },
-      { id: 'STORE_17', name: 'Airport Perimeter #17', lat: 33.65, lng: -84.42, cluster: 2, demand: 51, inventory: 110 },
-      { id: 'STORE_18', name: 'Smyrna #18', lat: 33.88, lng: -84.51, cluster: 2, demand: 39, inventory: 140 },
-      { id: 'STORE_19', name: 'Decatur #19', lat: 33.71, lng: -84.28, cluster: 2, demand: 43, inventory: 125 },
-      { id: 'STORE_20', name: 'Duluth #20', lat: 33.95, lng: -84.13, cluster: 2, demand: 41, inventory: 95 },
+      // Cluster 2: Southeast (6 Stores scattered cleanly around WH_03)
+      { id: 'STORE_15', name: 'Downtown Atlanta #15', x: 520, y: 270, cluster: 2, demand: 58, inventory: 190 },
+      { id: 'STORE_16', name: 'Buckhead #16', x: 615, y: 310, cluster: 2, demand: 47, inventory: 155 },
+      { id: 'STORE_17', name: 'Airport Perimeter #17', x: 625, y: 410, cluster: 2, demand: 51, inventory: 110 },
+      { id: 'STORE_18', name: 'Smyrna #18', x: 555, y: 470, cluster: 2, demand: 39, inventory: 140 },
+      { id: 'STORE_19', name: 'Decatur #19', x: 435, y: 450, cluster: 2, demand: 43, inventory: 125 },
+      { id: 'STORE_20', name: 'Duluth #20', x: 415, y: 340, cluster: 2, demand: 41, inventory: 95 },
     ];
 
     // 10 Fleet Trucks: 7 In Transit, 3 Parked at Docks
@@ -533,62 +540,33 @@ WEB_HTML = r"""<!DOCTYPE html>
       // Cluster 0: Northeast
       { id: 'TRUCK_01', driver: 'Marcus Vance', status: 'IN_TRANSIT', progress: 0.35, speed: 55, cargo: 380, cluster: 0, stops: ['WH_01', 'STORE_01', 'STORE_03', 'WH_01'] },
       { id: 'TRUCK_02', driver: 'Sarah Jenkins', status: 'IN_TRANSIT', progress: 0.65, speed: 50, cargo: 290, cluster: 0, stops: ['WH_01', 'STORE_02', 'STORE_06', 'WH_01'] },
-      { id: 'TRUCK_03', driver: 'Carlos Gomez', status: 'IN_TRANSIT', progress: 0.48, speed: 60, cargo: 340, cluster: 0, stops: ['WH_01', 'STORE_04', 'STORE_05', 'WH_01'] },
-      { id: 'TRUCK_04', driver: 'Elena Rostova', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 0, stops: ['WH_01', 'WH_01'], isRescueVehicle: true }, // Docked at WH_01
+      { id: 'TRUCK_03', driver: 'Carlos Gomez', status: 'IN_TRANSIT', progress: 0.50, speed: 60, cargo: 340, cluster: 0, stops: ['WH_01', 'STORE_04', 'STORE_05', 'WH_01'] },
+      { id: 'TRUCK_04', driver: 'Elena Rostova', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 0, stops: ['WH_01', 'WH_01'], isRescueVehicle: true },
 
       // Cluster 1: Midwest
       { id: 'TRUCK_05', driver: 'David Kowalski', status: 'IN_TRANSIT', progress: 0.25, speed: 52, cargo: 410, cluster: 1, stops: ['WH_02', 'STORE_08', 'STORE_10', 'STORE_11', 'WH_02'] },
       { id: 'TRUCK_06', driver: 'Jamal Washington', status: 'IN_TRANSIT', progress: 0.72, speed: 58, cargo: 320, cluster: 1, stops: ['WH_02', 'STORE_09', 'STORE_13', 'STORE_12', 'WH_02'] },
-      { id: 'TRUCK_07', driver: 'Robert Meyer', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 1, stops: ['WH_02', 'WH_02'] }, // Docked at WH_02
+      { id: 'TRUCK_07', driver: 'Robert Meyer', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 1, stops: ['WH_02', 'WH_02'] },
 
       // Cluster 2: Southeast
       { id: 'TRUCK_08', driver: 'Marcus Thorne', status: 'IN_TRANSIT', progress: 0.40, speed: 62, cargo: 430, cluster: 2, stops: ['WH_03', 'STORE_15', 'STORE_16', 'STORE_20', 'WH_03'] },
       { id: 'TRUCK_09', driver: 'Chen Wei', status: 'IN_TRANSIT', progress: 0.80, speed: 54, cargo: 310, cluster: 2, stops: ['WH_03', 'STORE_17', 'STORE_18', 'STORE_19', 'WH_03'] },
-      { id: 'TRUCK_10', driver: 'Angela Davis', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 2, stops: ['WH_03', 'WH_03'] }, // Docked at WH_03
+      { id: 'TRUCK_10', driver: 'Angela Davis', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 2, stops: ['WH_03', 'WH_03'] },
     ];
 
-    // Rescue sequence active state
+    // Rescue Mission State
     let rescueMission = {
       active: false,
       brokenTruckId: null,
       rescuerTruckId: null,
-      breakdownPos: null,
-      stage: 0 // 0=none, 1=traveling to breakdown, 2=delivering to store
+      breakdownPos: { x: 735, y: 205 }, // Spacious midpoint along WH_01 -> STORE_04
     };
-
-    // ================= COORDINATE TRANSFORM ENGINE =================
-    // Maps Geographic (lat, lng) to SVG (x, y) space [0..1000, 0..520]
-    function geoToSvg(lat, lng) {
-      if (activeCluster === 0) {
-        // Zoom Northeast: Lat [40.5 .. 41.1], Lng [-74.3 .. -73.4]
-        const x = 120 + ((lng - (-74.3)) / ((-73.4) - (-74.3))) * 760;
-        const y = 440 - ((lat - 40.5) / (41.15 - 40.5)) * 360;
-        return { x: Math.max(40, Math.min(960, x)), y: Math.max(40, Math.min(480, y)) };
-      } else if (activeCluster === 1) {
-        // Zoom Midwest: Lat [41.6 .. 42.1], Lng [-88.2 .. -87.5]
-        const x = 120 + ((lng - (-88.2)) / ((-87.5) - (-88.2))) * 760;
-        const y = 440 - ((lat - 41.6) / (42.1 - 41.6)) * 360;
-        return { x: Math.max(40, Math.min(960, x)), y: Math.max(40, Math.min(480, y)) };
-      } else if (activeCluster === 2) {
-        // Zoom Southeast: Lat [33.5 .. 34.1], Lng [-84.6 .. -84.0]
-        const x = 120 + ((lng - (-84.6)) / ((-84.0) - (-84.6))) * 760;
-        const y = 440 - ((lat - 33.5) / (34.1 - 33.5)) * 360;
-        return { x: Math.max(40, Math.min(960, x)), y: Math.max(40, Math.min(480, y)) };
-      } else {
-        // All US Operational Corridor
-        // Lng range: [-88.5 .. -73.0]
-        // Lat range: [33.0 .. 42.5]
-        const x = 100 + ((lng - (-88.5)) / ((-73.0) - (-88.5))) * 800;
-        const y = 460 - ((lat - 33.0) / (42.5 - 33.0)) * 400;
-        return { x: Math.max(50, Math.min(950, x)), y: Math.max(40, Math.min(480, y)) };
-      }
-    }
 
     function getNodePos(nodeId) {
       const wh = WAREHOUSES.find(w => w.id === nodeId);
-      if (wh) return geoToSvg(wh.lat, wh.lng);
+      if (wh) return { x: wh.x, y: wh.y };
       const st = STORES.find(s => s.id === nodeId);
-      if (st) return geoToSvg(st.lat, st.lng);
+      if (st) return { x: st.x, y: st.y };
       return { x: 500, y: 250 };
     }
 
@@ -596,144 +574,141 @@ WEB_HTML = r"""<!DOCTYPE html>
     function renderMap() {
       // 1. Grid Lines
       const grid = document.getElementById('grid-lines');
-      grid.innerHTML = '';
-      for (let x = 100; x < 1000; x += 100) {
-        grid.innerHTML += `<line x1="${x}" y1="20" x2="${x}" y2="500" />`;
-      }
-      for (let y = 60; y < 500; y += 60) {
-        grid.innerHTML += `<line x1="40" y1="${y}" x2="960" y2="${y}" />`;
+      if (grid.children.length === 0) {
+        for (let x = 80; x < 1000; x += 80) {
+          grid.innerHTML += `<line x1="${x}" y1="20" x2="${x}" y2="500" />`;
+        }
+        for (let y = 60; y < 500; y += 60) {
+          grid.innerHTML += `<line x1="40" y1="${y}" x2="960" y2="${y}" />`;
+        }
       }
 
       // 2. Highway Corridors Layer
       const corridorsLayer = document.getElementById('corridors-layer');
       corridorsLayer.innerHTML = '';
 
-      // Inter-hub arteries
-      const pWH1 = geoToSvg(40.7128, -74.006);
-      const pWH2 = geoToSvg(41.8781, -87.6298);
-      const pWH3 = geoToSvg(33.7490, -84.3880);
+      // Inter-hub grand trunk highways
+      const pWH1 = { x: 780, y: 160 };
+      const pWH2 = { x: 240, y: 160 };
+      const pWH3 = { x: 520, y: 370 };
 
       corridorsLayer.innerHTML += `
-        <line x1="${pWH1.x}" y1="${pWH1.y}" x2="${pWH2.x}" y2="${pWH2.y}" stroke="#1E293B" stroke-width="2" stroke-dasharray="4 4" />
-        <line x1="${pWH1.x}" y1="${pWH1.y}" x2="${pWH3.x}" y2="${pWH3.y}" stroke="#1E293B" stroke-width="2" stroke-dasharray="4 4" />
-        <line x1="${pWH2.x}" y1="${pWH2.y}" x2="${pWH3.x}" y2="${pWH3.y}" stroke="#1E293B" stroke-width="2" stroke-dasharray="4 4" />
+        <line x1="${pWH1.x}" y1="${pWH1.y}" x2="${pWH2.x}" y2="${pWH2.y}" stroke="#1E293B" stroke-width="2.5" stroke-dasharray="5 5" />
+        <line x1="${pWH1.x}" y1="${pWH1.y}" x2="${pWH3.x}" y2="${pWH3.y}" stroke="#1E293B" stroke-width="2.5" stroke-dasharray="5 5" />
+        <line x1="${pWH2.x}" y1="${pWH2.y}" x2="${pWH3.x}" y2="${pWH3.y}" stroke="#1E293B" stroke-width="2.5" stroke-dasharray="5 5" />
       `;
 
-      // Hub-to-store routes
+      // Hub-to-Store delivery routes
       STORES.forEach(st => {
-        if (activeCluster !== 'all' && st.cluster !== activeCluster) return;
         const wh = WAREHOUSES[st.cluster];
-        const p1 = geoToSvg(wh.lat, wh.lng);
-        const p2 = geoToSvg(st.lat, st.lng);
         corridorsLayer.innerHTML += `
-          <line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#0E192B" stroke-width="2" />
+          <line x1="${wh.x}" y1="${wh.y}" x2="${st.x}" y2="${st.y}" stroke="#0F172A" stroke-width="2" />
         `;
       });
 
-      // 3. Dynamic Rescue Beam (if active)
+      // 3. Dynamic Golden Rescue Laser Corridor
       const rescueLayer = document.getElementById('rescue-layer');
       rescueLayer.innerHTML = '';
-      if (rescueMission.active && rescueMission.breakdownPos) {
-        const wh1Pos = geoToSvg(40.7128, -74.006);
+      if (rescueMission.active) {
+        const wh1Dock = { x: 780, y: 200 };
         const brkPos = rescueMission.breakdownPos;
-        const st4Pos = geoToSvg(40.71, -74.17); // Newark Store #04
+        const st4Pos = { x: 695, y: 245 }; // Newark Store #04
 
         rescueLayer.innerHTML = `
-          <!-- Glow Behind -->
-          <polyline points="${wh1Pos.x},${wh1Pos.y} ${brkPos.x},${brkPos.y} ${st4Pos.x},${st4Pos.y}" fill="none" stroke="#F59E0B" stroke-width="6" opacity="0.4" filter="url(#glow-gold)" />
-          <!-- Animated Rescue Laser Beam -->
-          <polyline class="rescue-beam" points="${wh1Pos.x},${wh1Pos.y} ${brkPos.x},${brkPos.y} ${st4Pos.x},${st4Pos.y}" fill="none" stroke="#FBBF24" stroke-width="3" />
+          <!-- Golden Aura Glow -->
+          <polyline points="${wh1Dock.x},${wh1Dock.y} ${brkPos.x},${brkPos.y} ${st4Pos.x},${st4Pos.y}" fill="none" stroke="#F59E0B" stroke-width="6" opacity="0.35" filter="url(#glow-gold)" />
+          <!-- Animated Pulsing Rescue Beam -->
+          <polyline class="rescue-beam" points="${wh1Dock.x},${wh1Dock.y} ${brkPos.x},${brkPos.y} ${st4Pos.x},${st4Pos.y}" fill="none" stroke="#FBBF24" stroke-width="3" />
         `;
       }
 
-      // 4. Pinned Stores Layer
+      // 4. Pinned Stores Layer (Non-overlapping, spacious badges)
       const storesLayer = document.getElementById('stores-layer');
       storesLayer.innerHTML = '';
       STORES.forEach(st => {
-        if (activeCluster !== 'all' && st.cluster !== activeCluster) return;
-        const p = geoToSvg(st.lat, st.lng);
         const isDisrupted = (rescueMission.active && st.id === 'STORE_04');
         const strokeColor = isDisrupted ? '#EF4444' : '#06B6D4';
+        const labelWidth = st.id.length * 6 + 10;
 
         storesLayer.innerHTML += `
-          <g class="cursor-pointer transition hover:scale-125" onmouseenter="showTooltip(event, '${st.name}', 'Type: Retail Store<br/>Cluster: ${st.cluster}<br/>Daily Demand: ${st.demand} u/d<br/>Current Inventory: ${st.inventory} u<br/>Replenishment: (s, S)')" onmouseleave="hideTooltip()">
-            <circle cx="${p.x}" cy="${p.y}" r="6" fill="#0E131F" stroke="${strokeColor}" stroke-width="2" />
-            <circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${strokeColor}" />
-            <text x="${p.x}" y="${p.y - 10}" fill="#94A3B8" font-size="9" font-family="monospace" text-anchor="middle" font-weight="600">${st.id}</text>
+          <g class="cursor-pointer transition hover:scale-110" onmouseenter="showTooltip(event, '${st.name}', 'Type: Retail Store<br/>Daily Demand: ${st.demand} units/day<br/>Current Inventory: ${st.inventory} units<br/>Replenishment: (s, S) Continuous')" onmouseleave="hideTooltip()">
+            <!-- Pulse ring -->
+            <circle cx="${st.x}" cy="${st.y}" r="11" fill="none" stroke="${strokeColor}" stroke-width="1" opacity="0.4" />
+            <!-- Store Node Circle -->
+            <circle cx="${st.x}" cy="${st.y}" r="6.5" fill="#090D1A" stroke="${strokeColor}" stroke-width="2" />
+            <circle cx="${st.x}" cy="${st.y}" r="2.5" fill="${strokeColor}" />
+            <!-- Pill Background for Label -->
+            <rect x="${st.x - labelWidth/2}" y="${st.y - 20}" width="${labelWidth}" height="13" rx="3" fill="#080C17" stroke="#1E293B" stroke-width="1" />
+            <text x="${st.x}" y="${st.y - 10}" fill="#94A3B8" font-size="8.5" font-family="monospace" text-anchor="middle" font-weight="bold">${st.id}</text>
           </g>
         `;
       });
 
-      // 5. Pinned Warehouses Layer
+      // 5. Pinned Warehouses Layer & Docking Bays
       const warehousesLayer = document.getElementById('warehouses-layer');
       warehousesLayer.innerHTML = '';
       WAREHOUSES.forEach(wh => {
-        if (activeCluster !== 'all' && wh.cluster !== activeCluster) return;
-        const p = geoToSvg(wh.lat, wh.lng);
-
         warehousesLayer.innerHTML += `
-          <g class="cursor-pointer" onmouseenter="showTooltip(event, '${wh.name}', 'Type: Regional Distribution Hub<br/>Capacity: ${wh.capacity.toLocaleString()} units<br/>Inventory: ${wh.inventory.toLocaleString()} units<br/>Fleet Allocated: Trucks + Emergency Rescue Standby')" onmouseleave="hideTooltip()">
-            <!-- Pulse Halo -->
-            <circle cx="${p.x}" cy="${p.y}" r="22" fill="none" stroke="${wh.color}" stroke-width="1.5" opacity="0.4" />
-            <circle cx="${p.x}" cy="${p.y}" r="14" fill="#0B0D17" stroke="${wh.color}" stroke-width="2.5" filter="url(#glow-cyan)" />
-            <text x="${p.x}" y="${p.y + 4}" fill="#FFFFFF" font-size="11" text-anchor="middle">🏭</text>
-            <rect x="${p.x - 32}" y="${p.y + 18}" width="64" height="15" rx="3" fill="#0B0E19" stroke="${wh.color}" stroke-width="1" />
-            <text x="${p.x}" y="${p.y + 29}" fill="#E2E8F0" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">${wh.id} DEPOT</text>
+          <g class="cursor-pointer" onmouseenter="showTooltip(event, '${wh.name}', 'Type: Regional Distribution Hub<br/>Capacity: ${wh.capacity.toLocaleString()} units<br/>Inventory: ${wh.inventory.toLocaleString()} units<br/>Docking Bays: Active')" onmouseleave="hideTooltip()">
+            <!-- Ambient Beacon Ring -->
+            <circle cx="${wh.x}" cy="${wh.y}" r="26" fill="none" stroke="${wh.color}" stroke-width="1.5" opacity="0.35" />
+            <circle cx="${wh.x}" cy="${wh.y}" r="16" fill="#080B14" stroke="${wh.color}" stroke-width="2.5" filter="url(#glow-cyan)" />
+            <text x="${wh.x}" y="${wh.y + 5}" fill="#FFFFFF" font-size="12" text-anchor="middle">🏭</text>
+            <!-- Depot Name Pill -->
+            <rect x="${wh.x - 42}" y="${wh.y - 30}" width="84" height="16" rx="4" fill="#070A14" stroke="${wh.color}" stroke-width="1.5" />
+            <text x="${wh.x}" y="${wh.y - 18}" fill="#F8FAFC" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">${wh.id} DEPOT</text>
           </g>
         `;
       });
 
-      // 6. Trucks Layer (Moving + Parked Docks)
+      // 6. Trucks Layer (7 Moving along distinct corridors, 3 Parked at Docks)
       const trucksLayer = document.getElementById('trucks-layer');
       trucksLayer.innerHTML = '';
 
       trucks.forEach(trk => {
-        if (activeCluster !== 'all' && trk.cluster !== activeCluster) return;
-
         let pos = { x: 0, y: 0 };
 
         if (trk.status === 'PARKED') {
-          // Parked at warehouse loading bay (offset slightly to the right of warehouse)
+          // Parked at designated warehouse loading bay
           const wh = WAREHOUSES[trk.cluster];
-          const whPos = geoToSvg(wh.lat, wh.lng);
-          pos = { x: whPos.x + 28, y: whPos.y - 12 };
+          pos = { x: wh.dockX, y: wh.dockY };
 
           trucksLayer.innerHTML += `
-            <g class="cursor-pointer" onmouseenter="showTooltip(event, '${trk.id} [PARKED AT DOCK]', 'Driver: ${trk.driver}<br/>Status: STANDBY (Ready for Emergency Dispatch)<br/>Dock: ${wh.id} Bay #2<br/>Speed: 0 km/h')" onmouseleave="hideTooltip()">
-              <rect x="${pos.x - 8}" y="${pos.y - 8}" width="16" height="16" rx="4" fill="#1E293B" stroke="#64748B" stroke-width="1.5" />
-              <text x="${pos.x}" y="${pos.y + 3}" fill="#94A3B8" font-size="9" text-anchor="middle">🅿️</text>
-              <text x="${pos.x}" y="${pos.y + 17}" fill="#64748B" font-size="8" font-family="monospace" text-anchor="middle">${trk.id}</text>
+            <g class="cursor-pointer transition hover:scale-110" onmouseenter="showTooltip(event, '${trk.id} [PARKED AT DOCK]', 'Driver: ${trk.driver}<br/>Status: STANDBY (Ready for Emergency Dispatch)<br/>Dock: ${wh.id} Loading Bay #2<br/>Speed: 0 km/h')" onmouseleave="hideTooltip()">
+              <rect x="${pos.x - 18}" y="${pos.y - 9}" width="36" height="18" rx="4" fill="#0F172A" stroke="#475569" stroke-width="1.5" />
+              <text x="${pos.x - 8}" y="${pos.y + 4}" fill="#94A3B8" font-size="10">🅿️</text>
+              <text x="${pos.x + 6}" y="${pos.y + 3}" fill="#CBD5E1" font-size="8" font-family="monospace" font-weight="bold">${trk.id.split('_')[1]}</text>
             </g>
           `;
           return;
         }
 
         if (trk.status === 'BROKEN_DOWN') {
-          pos = rescueMission.breakdownPos || geoToSvg(40.78, -74.12);
+          pos = rescueMission.breakdownPos;
           trucksLayer.innerHTML += `
-            <g class="cursor-pointer pulse-danger" onclick="showRescueDialog()" onmouseenter="showTooltip(event, '⚠️ ${trk.id} [BROKEN DOWN]', 'Driver: ${trk.driver}<br/>Incident: Powertrain Failure<br/>Location: Near Newark Store #04<br/>Stranded Cargo: ${trk.cargo} units<br/>Click to review rescue action!')" onmouseleave="hideTooltip()">
-              <circle cx="${pos.x}" cy="${pos.y}" r="24" fill="none" stroke="#EF4444" stroke-width="2" opacity="0.8" />
-              <circle cx="${pos.x}" cy="${pos.y}" r="14" fill="#7F1D1D" stroke="#EF4444" stroke-width="2" />
-              <text x="${pos.x}" y="${pos.y + 4}" fill="#FFFFFF" font-size="12" text-anchor="middle">⚠️</text>
-              <rect x="${pos.x - 30}" y="${pos.y + 18}" width="60" height="15" rx="3" fill="#450A0A" stroke="#EF4444" stroke-width="1" />
-              <text x="${pos.x}" y="${pos.y + 29}" fill="#FCA5A5" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">HALTED</text>
+            <g class="cursor-pointer pulse-danger" onclick="showRescueDialog()" onmouseenter="showTooltip(event, '⚠️ ${trk.id} [BROKEN DOWN]', 'Driver: ${trk.driver}<br/>Incident: Powertrain Failure<br/>Location: Near Newark Store #04<br/>Stranded Cargo: ${trk.cargo} units<br/>Click to review emergency rescue!')" onmouseleave="hideTooltip()">
+              <circle cx="${pos.x}" cy="${pos.y}" r="22" fill="none" stroke="#EF4444" stroke-width="2" opacity="0.8" />
+              <circle cx="${pos.x}" cy="${pos.y}" r="14" fill="#7F1D1D" stroke="#EF4444" stroke-width="2.5" />
+              <text x="${pos.x}" y="${pos.y + 5}" fill="#FFFFFF" font-size="12" text-anchor="middle">⚠️</text>
+              <rect x="${pos.x - 32}" y="${pos.y + 18}" width="64" height="16" rx="4" fill="#450A0A" stroke="#EF4444" stroke-width="1.5" />
+              <text x="${pos.x}" y="${pos.y + 30}" fill="#FCA5A5" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">HALTED</text>
             </g>
           `;
           return;
         }
 
         if (trk.status === 'RESCUING') {
-          // Dynamic interpolated position along rescue route
-          const wh1Pos = geoToSvg(40.7128, -74.006);
-          const brkPos = rescueMission.breakdownPos || geoToSvg(40.78, -74.12);
-          const st4Pos = geoToSvg(40.71, -74.17);
+          // Interpolated along golden rescue corridor
+          const wh1Dock = { x: 780, y: 200 };
+          const brkPos = rescueMission.breakdownPos;
+          const st4Pos = { x: 695, y: 245 };
 
           if (trk.progress < 0.5) {
-            // Leg 1: Hub -> Breakdown
+            // Leg 1: Dock -> Breakdown Site
             const t = trk.progress * 2;
-            pos = { x: wh1Pos.x + (brkPos.x - wh1Pos.x) * t, y: wh1Pos.y + (brkPos.y - wh1Pos.y) * t };
+            pos = { x: wh1Dock.x + (brkPos.x - wh1Dock.x) * t, y: wh1Dock.y + (brkPos.y - wh1Dock.y) * t };
           } else {
-            // Leg 2: Breakdown -> Store 04
+            // Leg 2: Breakdown Site -> Newark Store #04
             const t = (trk.progress - 0.5) * 2;
             pos = { x: brkPos.x + (st4Pos.x - brkPos.x) * t, y: brkPos.y + (st4Pos.y - brkPos.y) * t };
           }
@@ -741,15 +716,15 @@ WEB_HTML = r"""<!DOCTYPE html>
           trucksLayer.innerHTML += `
             <g class="cursor-pointer" onmouseenter="showTooltip(event, '🚨 ${trk.id} [RESCUE IN PROGRESS]', 'Driver: ${trk.driver}<br/>Mission: Salvage TRUCK_03 cargo<br/>Speed: 68 km/h (Emergency Expedited)<br/>Destination: Newark Store #04')" onmouseleave="hideTooltip()">
               <circle cx="${pos.x}" cy="${pos.y}" r="16" fill="#78350F" stroke="#F59E0B" stroke-width="2" filter="url(#glow-gold)" />
-              <text x="${pos.x}" y="${pos.y + 4}" fill="#FFFFFF" font-size="11" text-anchor="middle">🚚</text>
-              <rect x="${pos.x - 28}" y="${pos.y + 18}" width="56" height="15" rx="3" fill="#451A03" stroke="#F59E0B" stroke-width="1" />
-              <text x="${pos.x}" y="${pos.y + 29}" fill="#FDE68A" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">RESCUING</text>
+              <text x="${pos.x}" y="${pos.y + 5}" fill="#FFFFFF" font-size="11" text-anchor="middle">🚚</text>
+              <rect x="${pos.x - 30}" y="${pos.y + 19}" width="60" height="16" rx="4" fill="#451A03" stroke="#F59E0B" stroke-width="1" />
+              <text x="${pos.x}" y="${pos.y + 31}" fill="#FDE68A" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">RESCUING</text>
             </g>
           `;
           return;
         }
 
-        // Active Moving Truck along standard stop list
+        // Active Moving Truck along distinct corridor
         const numSegments = trk.stops.length - 1;
         const totalProgress = (trk.progress % 1) * numSegments;
         const currentSegment = Math.min(Math.floor(totalProgress), numSegments - 1);
@@ -764,10 +739,11 @@ WEB_HTML = r"""<!DOCTYPE html>
         };
 
         trucksLayer.innerHTML += `
-          <g class="cursor-pointer" onclick="handleTruckClick('${trk.id}')" onmouseenter="showTooltip(event, '${trk.id} [IN TRANSIT]', 'Driver: ${trk.driver}<br/>Speed: ${trk.speed} km/h<br/>Cargo: ${trk.cargo} units<br/>Active Corridor: ${trk.stops[currentSegment]} ➔ ${trk.stops[currentSegment + 1]}<br/>Click to simulate breakdown!')" onmouseleave="hideTooltip()">
-            <circle cx="${pos.x}" cy="${pos.y}" r="12" fill="#082F49" stroke="#06B6D4" stroke-width="1.5" filter="url(#glow-cyan)" />
-            <text x="${pos.x}" y="${pos.y + 4}" fill="#FFFFFF" font-size="10" text-anchor="middle">🚚</text>
-            <text x="${pos.x}" y="${pos.y + 20}" fill="#38BDF8" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">${trk.id}</text>
+          <g class="cursor-pointer transition hover:scale-125" onclick="handleTruckClick('${trk.id}')" onmouseenter="showTooltip(event, '${trk.id} [IN TRANSIT]', 'Driver: ${trk.driver}<br/>Speed: ${trk.speed} km/h<br/>Cargo: ${trk.cargo} units<br/>Leg: ${trk.stops[currentSegment]} ➔ ${trk.stops[currentSegment + 1]}<br/>Click to simulate breakdown!')" onmouseleave="hideTooltip()">
+            <circle cx="${pos.x}" cy="${pos.y}" r="11" fill="#082F49" stroke="#06B6D4" stroke-width="2" filter="url(#glow-cyan)" />
+            <text x="${pos.x}" y="${pos.y + 4}" fill="#FFFFFF" font-size="9" text-anchor="middle">🚚</text>
+            <rect x="${pos.x - 22}" y="${pos.y + 14}" width="44" height="12" rx="3" fill="#031525" stroke="#0284C7" stroke-width="0.8" />
+            <text x="${pos.x}" y="${pos.y + 23}" fill="#38BDF8" font-size="7.5" font-family="monospace" font-weight="bold" text-anchor="middle">${trk.id}</text>
           </g>
         `;
       });
@@ -776,10 +752,6 @@ WEB_HTML = r"""<!DOCTYPE html>
     // ================= CONTINUOUS SIMULATION ANIMATION =================
     function startAnimationLoop() {
       function frame() {
-        const now = Date.now();
-        const dt = (now - lastTickTime) / 1000;
-
-        // If continuous play is enabled, slowly advance progress
         if (isPlaying) {
           trucks.forEach(t => {
             if (t.status === 'IN_TRANSIT') {
@@ -788,7 +760,7 @@ WEB_HTML = r"""<!DOCTYPE html>
             } else if (t.status === 'RESCUING') {
               t.progress += 0.005;
               if (t.progress >= 1.0) {
-                // Completed delivery!
+                // Completed rescue mission!
                 t.status = 'PARKED';
                 t.progress = 0;
                 rescueMission.active = false;
@@ -820,11 +792,9 @@ WEB_HTML = r"""<!DOCTYPE html>
       target.status = 'BROKEN_DOWN';
       target.speed = 0;
 
-      // Position breakdown coordinates
       rescueMission.active = true;
       rescueMission.brokenTruckId = truckId;
       rescueMission.rescuerTruckId = 'TRUCK_04';
-      rescueMission.breakdownPos = geoToSvg(40.78, -74.12);
 
       // 1. Show Emergency Driver Alert
       document.getElementById('driver-dispatch-modal').classList.remove('hidden');
@@ -833,10 +803,10 @@ WEB_HTML = r"""<!DOCTYPE html>
       // 2. Show Autonomous Recommendation Card
       document.getElementById('rec-spotlight').classList.remove('hidden');
       document.getElementById('rec-title').innerText = 'Critical: Powertrain Failure on ' + truckId;
-      document.getElementById('rec-desc').innerText = '340 units of perishable cargo stranded on Hackensack corridor. Nearest idle rescuer: TRUCK_04 (Driver: Elena Rostova, 11.2 km away at WH_01 dock).';
+      document.getElementById('rec-desc').innerText = '340 units of perishable cargo stranded on corridor. Nearest idle rescuer: Elena Rostova (TRUCK_04) parked at WH_01 loading dock.';
       document.getElementById('rec-tradeoff').innerText = 'Expedited Surcharge: $145.00 vs Lost Sales Penalty Prevented: $8,500.00. Net Financial Gain: +$8,355.00.';
 
-      // 3. Update KPIs to reflect risk
+      // 3. Update KPIs
       document.getElementById('header-fill-rate').innerText = '91.4%';
       document.getElementById('kpi-fill').innerText = '91.4%';
       document.getElementById('kpi-stockout').innerText = '4.8%';
@@ -897,12 +867,11 @@ WEB_HTML = r"""<!DOCTYPE html>
       rescueMission.active = false;
       rescueMission.brokenTruckId = null;
       rescueMission.rescuerTruckId = null;
-      rescueMission.breakdownPos = null;
 
       trucks = [
         { id: 'TRUCK_01', driver: 'Marcus Vance', status: 'IN_TRANSIT', progress: 0.35, speed: 55, cargo: 380, cluster: 0, stops: ['WH_01', 'STORE_01', 'STORE_03', 'WH_01'] },
         { id: 'TRUCK_02', driver: 'Sarah Jenkins', status: 'IN_TRANSIT', progress: 0.65, speed: 50, cargo: 290, cluster: 0, stops: ['WH_01', 'STORE_02', 'STORE_06', 'WH_01'] },
-        { id: 'TRUCK_03', driver: 'Carlos Gomez', status: 'IN_TRANSIT', progress: 0.48, speed: 60, cargo: 340, cluster: 0, stops: ['WH_01', 'STORE_04', 'STORE_05', 'WH_01'] },
+        { id: 'TRUCK_03', driver: 'Carlos Gomez', status: 'IN_TRANSIT', progress: 0.50, speed: 60, cargo: 340, cluster: 0, stops: ['WH_01', 'STORE_04', 'STORE_05', 'WH_01'] },
         { id: 'TRUCK_04', driver: 'Elena Rostova', status: 'PARKED', progress: 0.0, speed: 0, cargo: 0, cluster: 0, stops: ['WH_01', 'WH_01'], isRescueVehicle: true },
         { id: 'TRUCK_05', driver: 'David Kowalski', status: 'IN_TRANSIT', progress: 0.25, speed: 52, cargo: 410, cluster: 1, stops: ['WH_02', 'STORE_08', 'STORE_10', 'STORE_11', 'WH_02'] },
         { id: 'TRUCK_06', driver: 'Jamal Washington', status: 'IN_TRANSIT', progress: 0.72, speed: 58, cargo: 320, cluster: 1, stops: ['WH_02', 'STORE_09', 'STORE_13', 'STORE_12', 'WH_02'] },
@@ -1014,6 +983,14 @@ WEB_HTML = r"""<!DOCTYPE html>
       }
     }
 
+    // ViewBox smooth zoom targets
+    const VIEWBOX_TARGETS = {
+      'all': '0 0 1000 520',
+      0: '620 10 320 290',   // Zoom Northeast (NYC)
+      1: '100 30 280 260',   // Zoom Midwest (CHI)
+      2: '380 230 290 280'   // Zoom Southeast (ATL)
+    };
+
     function setMapCluster(c) {
       activeCluster = c;
       ['all', 0, 1, 2].forEach(k => {
@@ -1024,6 +1001,10 @@ WEB_HTML = r"""<!DOCTYPE html>
           btn.className = 'px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition';
         }
       });
+
+      const svg = document.getElementById('vector-map');
+      const target = VIEWBOX_TARGETS[c] || VIEWBOX_TARGETS['all'];
+      svg.setAttribute('viewBox', target);
       renderMap();
     }
 
@@ -1116,7 +1097,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         const xStep = (w - 70) / (labels.length - 1);
         const getY = (val) => h - 40 - ((val - 10) / 22) * (h - 70);
 
-        // Draw P10-P90 Uncertainty Fan Area
+        // P10-P90 Uncertainty Fan Area
         ctx.beginPath();
         for (let i = 4; i < labels.length; i++) {
           const x = 50 + i * xStep;
