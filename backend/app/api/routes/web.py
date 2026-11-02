@@ -19,9 +19,9 @@ WEB_HTML = r"""<!DOCTYPE html>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      --bg-dark: #07080C;
-      --card-bg: rgba(14, 18, 27, 0.90);
-      --card-border: rgba(255, 255, 255, 0.09);
+      --bg-dark: #05060A;
+      --card-bg: rgba(11, 15, 25, 0.92);
+      --card-border: rgba(255, 255, 255, 0.10);
       --accent-cyan: #06B6D4;
       --accent-gold: #F59E0B;
       --accent-purple: #8B5CF6;
@@ -38,9 +38,15 @@ WEB_HTML = r"""<!DOCTYPE html>
     }
     .glass-card {
       background: var(--card-bg);
-      backdrop-filter: blur(14px);
+      backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
-      box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 28px -2px rgba(0, 0, 0, 0.6);
+    }
+    .nexus-glow-gold {
+      text-shadow: 0 0 20px rgba(245, 158, 11, 0.5), 0 0 40px rgba(245, 158, 11, 0.2);
+    }
+    .nexus-glow-cyan {
+      text-shadow: 0 0 20px rgba(6, 182, 212, 0.5), 0 0 40px rgba(6, 182, 212, 0.2);
     }
     .arrakis-border { border-color: var(--card-border); }
     .pulse-danger {
@@ -66,68 +72,88 @@ WEB_HTML = r"""<!DOCTYPE html>
     @keyframes dashMove {
       to { stroke-dashoffset: -28; }
     }
-    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #07080C; }
+    ::-webkit-scrollbar-track { background: #05060A; }
     ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500/30">
 
-  <!-- ================= TOP HEADER / TELEMETRY DECK ================= -->
-  <header class="h-16 shrink-0 border-b arrakis-border bg-slate-950/95 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md">
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2.5">
-        <div class="h-9 w-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-black text-sm tracking-wider shadow-inner">
+  <!-- ================= TOP HEADER / NEXUS BRAND DECK ================= -->
+  <header class="h-20 shrink-0 border-b arrakis-border bg-slate-950/95 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md">
+    <div class="flex items-center gap-5">
+      <div class="flex items-center gap-3.5">
+        <div class="h-11 w-11 rounded-2xl bg-gradient-to-br from-amber-500/20 via-cyan-500/20 to-purple-500/20 border-2 border-amber-400/50 flex items-center justify-center text-amber-300 font-black text-lg tracking-wider shadow-lg shadow-amber-500/10">
           NX
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-black tracking-wider text-white">NEXUS</span>
-            <span class="font-mono text-[9px] uppercase tracking-widest text-cyan-400 font-bold px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl font-black tracking-widest text-white nexus-glow-gold">NEXUS</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest text-amber-400 font-black px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
               SUPPLY CHAIN DIGITAL TWIN
             </span>
           </div>
-          <p class="font-mono text-[10px] text-slate-400">Shopkeeper Order Desk • Warehouse SKU Scenarios • Dynamic Shortest Path VRP</p>
+          <p class="font-mono text-[11px] text-slate-400">Autonomous Multi-Echelon Decision Support • Live Physical Fleet & Store Mirror</p>
         </div>
       </div>
 
-      <!-- Ticker Metrics -->
-      <div class="hidden lg:flex items-center gap-3 border-l arrakis-border pl-4 text-xs font-mono">
+      <!-- Live Ticker Metrics -->
+      <div class="hidden xl:flex items-center gap-4 border-l arrakis-border pl-6 text-xs font-mono">
         <span class="text-slate-300">DAY <span id="tick-day" class="text-white font-bold">1</span> • <span id="tick-label" class="text-cyan-400 font-bold">T+0</span></span>
         <span class="text-slate-700">|</span>
         <span class="flex items-center gap-1.5">
-          <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-slate-400">OTIF Fill:</span>
+          <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-400">OTIF Service:</span>
           <span id="header-fill-rate" class="text-emerald-400 font-bold">98.5%</span>
         </span>
         <span class="text-slate-700">|</span>
         <span class="text-slate-300">Fleet: <strong id="header-fleet" class="text-white">10 Trucks (7 Transit, 3 Docked)</strong></span>
         <span class="text-slate-700">|</span>
         <span id="disr-badge" class="hidden text-amber-400 font-bold flex items-center gap-1">
-          <span class="h-2 w-2 rounded-full bg-amber-400 animate-ping"></span> Shock Active
+          <span class="h-2 w-2 rounded-full bg-amber-400 animate-ping"></span> Disruption Active
         </span>
       </div>
     </div>
 
     <!-- Right Header Controls -->
-    <div class="flex items-center gap-2.5">
-      <a href="/docs" target="_blank" class="rounded-xl border arrakis-border bg-slate-900 px-3 py-1.5 text-xs font-mono text-cyan-400 hover:bg-slate-800 hover:border-cyan-500/40 transition">
+    <div class="flex items-center gap-3">
+      <a href="/docs" target="_blank" class="rounded-xl border arrakis-border bg-slate-900 px-3.5 py-2 text-xs font-mono text-cyan-400 hover:bg-slate-800 hover:border-cyan-500/40 transition">
         Swagger API Docs
       </a>
-      <div class="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-mono text-emerald-400">
+      <div class="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-mono text-emerald-400">
         <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Authoritative Backend Connected (:8000)</span>
+        <span>Authoritative Twin Synchronized (:8000)</span>
       </div>
     </div>
   </header>
 
+  <!-- ================= 4-ECHELON DIGITAL TWIN PIPELINE BAR ================= -->
+  <div class="border-b arrakis-border bg-slate-950/70 px-4 sm:px-8 py-2.5 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-300">
+      <div class="flex items-center gap-2">
+        <span class="text-slate-500 uppercase tracking-widest text-[10px]">DIGITAL TWIN PIPELINE:</span>
+        <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">Tier-1 Suppliers</span>
+        <span>➔</span>
+        <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">3 Regional Hubs</span>
+        <span>➔</span>
+        <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Shortest-Path VRP Fleet</span>
+        <span>➔</span>
+        <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">20 Retail Stores</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-slate-500 text-[10px]">TWIN TIME:</span>
+        <strong class="text-cyan-400" id="twin-utc-disp">2026-11-02 09:55:00 UTC</strong>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= WORKSPACE ROLE NAVIGATION TABS ================= -->
-  <div class="border-b arrakis-border bg-slate-950/80 px-4 sm:px-6 sticky top-16 z-40 backdrop-blur-md">
+  <div class="border-b arrakis-border bg-slate-950/90 px-4 sm:px-8 sticky top-20 z-40 backdrop-blur-md">
     <div class="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto py-2.5 gap-2 text-xs font-mono">
       <div class="flex items-center gap-2">
-        <button onclick="switchWorkspaceView('map')" id="tab-btn-map" class="px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 transition flex items-center gap-2 shadow-sm">
-          <span>🗺️</span> Digital Twin Map & Shortest Path VRP
+        <button onclick="switchWorkspaceView('map')" id="tab-btn-map" class="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 transition flex items-center gap-2 shadow-sm">
+          <span>🗺️</span> NEXUS Fleet Map & Shortest Path VRP
         </button>
         <button onclick="switchWorkspaceView('shopkeeper')" id="tab-btn-shopkeeper" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 hover:text-white border arrakis-border transition flex items-center gap-2">
           <span>🏬</span> Shopkeeper Order Desk ("Only Order Product")
@@ -140,7 +166,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         </button>
       </div>
 
-      <!-- Route Path Toggle & Simulation Play Controls -->
+      <!-- Playback Controls -->
       <div class="flex items-center gap-2 shrink-0">
         <button id="routes-toggle-btn" onclick="toggleAllRoutes()" class="rounded-xl border border-cyan-500/40 bg-cyan-500/15 hover:bg-cyan-500/25 px-3 py-1.5 text-xs font-mono font-semibold text-cyan-300 transition">
           🛣️ Paths: ON
@@ -159,7 +185,7 @@ WEB_HTML = r"""<!DOCTYPE html>
   </div>
 
   <!-- ================= MAIN DASHBOARD CONTAINER ================= -->
-  <main class="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6">
+  <main class="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
 
     <!-- KPI METRICS TELEMETRY GRID -->
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
@@ -242,13 +268,13 @@ WEB_HTML = r"""<!DOCTYPE html>
         <div class="flex flex-wrap items-center justify-between gap-3 border-b arrakis-border pb-3">
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-sm font-bold text-white">Geographic Fleet Routing & Dynamic Shortest Path VRP</h3>
+              <h3 class="text-base font-black tracking-wide text-white">NEXUS Geographic Digital Twin & Dynamic Shortest Path VRP</h3>
               <span class="rounded bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 font-mono text-[9px] text-cyan-300">
                 [Cost Optimized • Distance Minimized • Dynamic Nearest Failover]
               </span>
             </div>
             <p class="text-xs text-slate-400 mt-0.5">
-              Live VRP engine computes the shortest path between warehouses, retail stores, and emergency breakdown sites
+              Live multi-echelon network mirrors 3 regional warehouses, 20 retail stores, and 10 dynamic fleet trucks
             </p>
           </div>
 
@@ -326,13 +352,13 @@ WEB_HTML = r"""<!DOCTYPE html>
             <!-- Highway Corridors Layer -->
             <g id="corridors-layer"></g>
 
-            <!-- Dynamic Dedicated Truck Paths (Shortest Route Corridors) -->
+            <!-- Dedicated Truck Paths (Shortest Route Corridors) -->
             <g id="truck-paths-layer"></g>
 
             <!-- Inter-Warehouse Transshipment Laser -->
             <g id="transship-layer"></g>
 
-            <!-- Dynamic Shopkeeper Delivery Path -->
+            <!-- Shopkeeper Delivery Path -->
             <g id="shopkeeper-delivery-layer"></g>
 
             <!-- Dynamic Shortest-Path Rescue Laser -->
@@ -359,7 +385,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400 pt-1">
           <div class="flex items-center gap-2">
             <span class="text-slate-500">ZOOM:</span>
-            <button onclick="setMapCluster('all')" id="clust-btn-all" class="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold hover:bg-cyan-500/30 transition">
+            <button onclick="setMapCluster('all')" id="clust-btn-all" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold hover:bg-amber-500/30 transition">
               All (Full Network)
             </button>
             <button onclick="setMapCluster(0)" id="clust-btn-0" class="px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition">
@@ -392,12 +418,12 @@ WEB_HTML = r"""<!DOCTYPE html>
           <div>
             <div class="flex items-center gap-2">
               <span class="px-2.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-xs font-bold border border-cyan-500/30">
-                RETAIL STORE WORKSPACE
+                NEXUS RETAIL PORTAL
               </span>
               <h2 class="text-lg font-bold text-white">Shopkeeper Replenishment & Order Desk</h2>
             </div>
             <p class="text-xs text-slate-400 mt-1">
-              Store managers can inspect live shelf stock, daily sales velocity, and submit direct replenishment orders to the regional hub
+              Store managers can inspect shelf stock, daily sales depletion rate, and submit direct replenishment orders to the regional hub
             </p>
           </div>
 
@@ -509,7 +535,7 @@ WEB_HTML = r"""<!DOCTYPE html>
           <div>
             <div class="flex items-center gap-2">
               <span class="px-2.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono text-xs font-bold border border-purple-500/30">
-                REGIONAL WAREHOUSE STRATEGY
+                NEXUS HUB STRATEGY
               </span>
               <h2 class="text-lg font-bold text-white">Warehouse SKU Planning & Assortment Scenarios</h2>
             </div>
@@ -529,7 +555,7 @@ WEB_HTML = r"""<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- 4 Assortment Scenarios ("Which product should be in warehouse?") -->
+        <!-- 4 Assortment Scenarios -->
         <div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider">Select Warehouse Assortment & Stocking Policy Scenario</h3>
@@ -607,7 +633,7 @@ WEB_HTML = r"""<!DOCTYPE html>
           <div>
             <div class="flex items-center gap-2">
               <span class="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30">
-                INTER-WAREHOUSE NETWORK
+                NEXUS INTER-HUB BALANCING
               </span>
               <h2 class="text-lg font-bold text-white">Inter-Warehouse Stock Transshipment & Balancing</h2>
             </div>
@@ -776,7 +802,6 @@ WEB_HTML = r"""<!DOCTYPE html>
     let currentTick = 0;
     let isPlaying = false;
     let animFrameId = null;
-    let optimizerEnabled = true;
     let showAllTruckPaths = true;
     let activeCluster = 'all';
 
@@ -943,7 +968,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         if (id === viewId) {
           if (el) el.classList.remove('hidden');
           if (btn) {
-            btn.className = 'px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 transition flex items-center gap-2 shadow-sm';
+            btn.className = 'px-4 py-2 rounded-xl bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 transition flex items-center gap-2 shadow-sm';
           }
         } else {
           if (el) el.classList.add('hidden');
@@ -1009,7 +1034,6 @@ WEB_HTML = r"""<!DOCTYPE html>
       const st = STORES.find(s => s.id === storeId);
       const wh = WAREHOUSES[st ? st.cluster : 0];
 
-      // Dynamic shortest Euclidean distance
       const dist = Math.hypot(wh.x - (st ? st.x : 700), wh.y - (st ? st.y : 240));
       const distKm = Math.round(dist * 0.18 + 5);
       const freightCost = (distKm * 1.25).toFixed(2);
@@ -1028,7 +1052,6 @@ WEB_HTML = r"""<!DOCTYPE html>
       const st = STORES.find(s => s.id === storeId);
       const wh = WAREHOUSES[st ? st.cluster : 0];
 
-      // Dispatch dynamic delivery truck on map
       shopkeeperDelivery.active = true;
       shopkeeperDelivery.fromWh = wh.id;
       shopkeeperDelivery.toStore = storeId;
@@ -1036,7 +1059,6 @@ WEB_HTML = r"""<!DOCTYPE html>
       shopkeeperDelivery.qty = qty;
       shopkeeperDelivery.progress = 0.05;
 
-      // Add to ledger
       const ordId = '#ORD-' + Math.floor(1000 + Math.random() * 9000);
       const tbody = document.getElementById('store-orders-tbody');
       tbody.innerHTML = `
@@ -1050,9 +1072,8 @@ WEB_HTML = r"""<!DOCTYPE html>
         </tr>
       ` + tbody.innerHTML;
 
-      showInboundArrivalToast(`Order Dispatched: ${ordId}`, `Dispatched ${qty} units of ${sku} from ${wh.id} to ${storeId} along shortest VRP path.`, `+${qty} Units In Transit`);
+      showInboundArrivalToast(`NEXUS Order Dispatched: ${ordId}`, `Dispatched ${qty} units of ${sku} from ${wh.id} to ${storeId} along shortest VRP path.`, `+${qty} Units In Transit`);
 
-      // Switch to map view to watch the dynamic delivery
       switchWorkspaceView('map');
     }
 
@@ -1130,7 +1151,7 @@ WEB_HTML = r"""<!DOCTYPE html>
         }
       });
       updateWarehouseScenariosView();
-      showInboundArrivalToast('Warehouse Strategy Reconfigured', `Assortment policy updated to "${WAREHOUSE_SCENARIOS[key].name}". SKU allocation recomputed.`, 'Policy Optimal');
+      showInboundArrivalToast('NEXUS Assortment Reconfigured', `Assortment policy updated to "${WAREHOUSE_SCENARIOS[key].name}". SKU allocation recomputed.`, 'Policy Optimal');
     }
 
     // ================= INTER-WAREHOUSE TRANSSHIPMENT =================
@@ -1145,13 +1166,12 @@ WEB_HTML = r"""<!DOCTYPE html>
       transshipMission.units = qty;
       transshipMission.progress = 0.05;
 
-      showInboundArrivalToast('Transshipment En Route', `Dispatched heavy-haul transshipment truck from ${fromWh} ➔ ${toWh} along shortest grand highway corridor.`, `+${qty.toLocaleString()} Units`);
+      showInboundArrivalToast('NEXUS Transshipment En Route', `Dispatched heavy-haul transshipment truck from ${fromWh} ➔ ${toWh} along shortest grand highway corridor.`, `+${qty.toLocaleString()} Units`);
       switchWorkspaceView('map');
     }
 
     // ================= MAP RENDERING ENGINE =================
     function renderMap() {
-      // 1. Grid Lines
       const grid = document.getElementById('grid-lines');
       if (grid.children.length === 0) {
         for (let x = 80; x < 1000; x += 80) {
@@ -1162,7 +1182,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         }
       }
 
-      // 2. Grand Inter-Hub Corridors
       const corridorsLayer = document.getElementById('corridors-layer');
       corridorsLayer.innerHTML = `
         <line x1="780" y1="160" x2="240" y2="160" stroke="#1E293B" stroke-width="2.5" stroke-dasharray="5 5" />
@@ -1170,7 +1189,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         <line x1="240" y1="160" x2="520" y2="370" stroke="#1E293B" stroke-width="2.5" stroke-dasharray="5 5" />
       `;
 
-      // 3. ALL DEDICATED TRUCK PATHS (Full VRP Route Corridors)
       const truckPathsLayer = document.getElementById('truck-paths-layer');
       truckPathsLayer.innerHTML = '';
       if (showAllTruckPaths) {
@@ -1187,7 +1205,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         });
       }
 
-      // 4. Shopkeeper On-Demand Delivery Corridor
       const shopDeliveryLayer = document.getElementById('shopkeeper-delivery-layer');
       shopDeliveryLayer.innerHTML = '';
       if (shopkeeperDelivery.active) {
@@ -1200,10 +1217,8 @@ WEB_HTML = r"""<!DOCTYPE html>
         };
 
         shopDeliveryLayer.innerHTML = `
-          <!-- Shortest Path Laser Corridor -->
           <line x1="${whPos.x}" y1="${whPos.y}" x2="${stPos.x}" y2="${stPos.y}" stroke="#06B6D4" stroke-width="5" opacity="0.3" filter="url(#glow-cyan)" />
           <line class="delivery-beam" x1="${whPos.x}" y1="${whPos.y}" x2="${stPos.x}" y2="${stPos.y}" stroke="#38BDF8" stroke-width="2.5" />
-          <!-- Direct Delivery Truck -->
           <g transform="translate(${curPos.x}, ${curPos.y})">
             <circle cx="0" cy="0" r="14" fill="#0C4A6E" stroke="#0284C7" stroke-width="2" filter="url(#glow-cyan)" />
             <text x="0" y="4" fill="#FFFFFF" font-size="11" text-anchor="middle">🚚</text>
@@ -1213,7 +1228,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       }
 
-      // 5. Inter-Warehouse Transshipment Laser
       const transshipLayer = document.getElementById('transship-layer');
       transshipLayer.innerHTML = '';
       if (transshipMission.active) {
@@ -1237,7 +1251,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       }
 
-      // 6. Dynamic Rescue Laser Corridor (Shortest Path Failover)
       const rescueLayer = document.getElementById('rescue-layer');
       rescueLayer.innerHTML = '';
       if (rescueMission.active && rescueMission.breakdownPos) {
@@ -1251,7 +1264,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       }
 
-      // 7. Pinned Stores Layer
       const storesLayer = document.getElementById('stores-layer');
       storesLayer.innerHTML = '';
       STORES.forEach(st => {
@@ -1270,7 +1282,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       });
 
-      // 8. Pinned Warehouses Layer & Docking Bays
       const warehousesLayer = document.getElementById('warehouses-layer');
       warehousesLayer.innerHTML = '';
       WAREHOUSES.forEach(wh => {
@@ -1285,7 +1296,6 @@ WEB_HTML = r"""<!DOCTYPE html>
         `;
       });
 
-      // 9. Trucks Layer
       const trucksLayer = document.getElementById('trucks-layer');
       trucksLayer.innerHTML = '';
 
@@ -1328,7 +1338,6 @@ WEB_HTML = r"""<!DOCTYPE html>
           return;
         }
 
-        // Active Moving Truck
         trucksLayer.innerHTML += `
           <g class="cursor-pointer transition hover:scale-125" onclick="triggerTruckBreakdown('${trk.id}')" onmouseenter="showTooltip(event, '${trk.id} [IN TRANSIT]', 'Driver: ${trk.driver}<br/>Speed: ${trk.speed} km/h<br/>Cargo: ${trk.cargo} units<br/>Shortest Route Corridor: Active<br/>Click to simulate breakdown on this truck!')" onmouseleave="hideTooltip()">
             <circle cx="${pos.x}" cy="${pos.y}" r="11" fill="#082F49" stroke="${trk.pathColor || '#06B6D4'}" stroke-width="2" filter="url(#glow-cyan)" />
@@ -1344,7 +1353,6 @@ WEB_HTML = r"""<!DOCTYPE html>
     function startAnimationLoop() {
       function frame() {
         if (isPlaying) {
-          // Regular trucks
           trucks.forEach(t => {
             if (t.status === 'IN_TRANSIT') {
               t.progress += 0.003;
@@ -1363,13 +1371,11 @@ WEB_HTML = r"""<!DOCTYPE html>
             }
           });
 
-          // Shopkeeper Delivery Truck
           if (shopkeeperDelivery.active) {
             shopkeeperDelivery.progress += 0.006;
             if (shopkeeperDelivery.progress >= 1.0) {
               shopkeeperDelivery.active = false;
               shopkeeperDelivery.progress = 0.0;
-              // Increment store shelf inventory
               const st = STORES.find(s => s.id === shopkeeperDelivery.toStore);
               if (st) st.inventory += shopkeeperDelivery.qty;
               const prods = STORE_PRODUCTS[shopkeeperDelivery.toStore];
@@ -1386,7 +1392,6 @@ WEB_HTML = r"""<!DOCTYPE html>
             }
           }
 
-          // Transshipment Truck
           if (transshipMission.active) {
             transshipMission.progress += transshipMission.speed;
             if (transshipMission.progress >= 1.0) {
@@ -1414,7 +1419,6 @@ WEB_HTML = r"""<!DOCTYPE html>
       target.status = 'BROKEN_DOWN';
       target.speed = 0;
 
-      // Calculate shortest distance to find best rescuer
       let nearestCandidate = null;
       let minTotalDistance = 999999;
 
@@ -1620,7 +1624,7 @@ WEB_HTML = r"""<!DOCTYPE html>
       ['all', 0, 1, 2].forEach(k => {
         const btn = document.getElementById('clust-btn-' + k);
         if (k === c) {
-          btn.className = 'px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold hover:bg-cyan-500/30 transition';
+          btn.className = 'px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold hover:bg-amber-500/30 transition';
         } else {
           btn.className = 'px-2.5 py-1 rounded bg-slate-900 text-slate-300 border arrakis-border hover:bg-slate-800 transition';
         }
