@@ -9,7 +9,7 @@ from typing import List, Optional, Dict
 from fastapi import APIRouter, Security
 from pydantic import BaseModel
 
-from app.services.auth_service import UserProfile, require_roles_or_demo, create_access_token
+from app.services.auth_service import UserProfile, require_roles_or_demo
 from app.services.alert_service import AlertService
 from app.sim.runner import MonteCarloScenarioRunner
 from contracts.models import DisruptionContract, DisruptionType, TruckStatus
@@ -56,16 +56,6 @@ class SimulationRunRequest(BaseModel):
     supplier_failure_severity: Optional[float] = None
 
 
-@router.get("/demo-token")
-def get_demo_token(role: str = "ADMIN"):
-    """Convenience helper for testing in Swagger UI: generates a signed Bearer token."""
-    token = create_access_token({"sub": f"demo_{role.lower()}", "role": role})
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "role": role,
-        "instructions": "Copy access_token, click 'Authorize' at top of Swagger docs, and paste token.",
-    }
 
 
 @router.get("/state")

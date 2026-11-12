@@ -131,23 +131,12 @@ def require_roles(allowed_roles: List[str]):
     return role_checker
 
 
+
 def require_roles_or_demo(allowed_roles: List[str]):
     """
-    FastAPI dependency factory:
-    Enforces role check if a Bearer token is provided.
-    If no authorization header is provided (e.g. Swagger UI exploration),
-    defaults to demo Admin user for frictionless execution.
+    Backward-compatible role dependency.
+
+    Authentication is mandatory. Demo users must explicitly log in
+    and provide a valid Bearer token.
     """
-    def role_checker(
-        credentials: Optional[HTTPAuthorizationCredentials] = Security(security_bearer),
-    ) -> UserProfile:
-        if not credentials:
-            return UserProfile(username="demo_admin", role="ADMIN")
-        user = get_current_user(credentials)
-        if user.role not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Forbidden: role '{user.role}' lacks permission. Allowed: {allowed_roles}",
-            )
-        return user
-    return role_checker
+    return require_roles(allowed_roles)
