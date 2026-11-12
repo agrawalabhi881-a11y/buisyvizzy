@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql+psycopg://supply_chain:supply_chain_ci@localhost:5432/supply_chain
+      JWT_SECRET_KEY: ci-only-jwt-signing-material-0123456789abcdef0123456789abcdef
+      APP_ENV: test
     services:
       postgres:
         image: postgres:16-alpine
@@ -44,7 +46,7 @@ jobs:
       - run: mypy app scripts
       - run: alembic upgrade head
       - run: pytest
-      - run: python -m scripts.seed
+      - run: python -m scripts.seed --help
       - run: alembic history
 
   frontend:
@@ -65,6 +67,9 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: supply_chain_ci_password
+      JWT_SECRET_KEY: ci-only-jwt-signing-material-0123456789abcdef0123456789abcdef
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3

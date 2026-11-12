@@ -1,24 +1,25 @@
 """
-backend/app/database/session.py
 Database connection engine and FastAPI session dependency.
 """
 
 from collections.abc import Generator
-import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev_scm.db")
+from app.core.config import get_settings
+
+DATABASE_URL = get_settings().database_url
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db() -> Generator[Session, None, None]:
-    """FastAPI dependency providing a transactional database session."""
+    """FastAPI dependency providing a database session."""
     db = SessionLocal()
     try:
         yield db

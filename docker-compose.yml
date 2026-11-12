@@ -1,11 +1,10 @@
-
 services:
   postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-supply_chain}
       POSTGRES_USER: ${POSTGRES_USER:-supply_chain}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_only_change_me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -36,7 +35,8 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-development}
       BACKEND_PORT: 8000
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-supply_chain}:${POSTGRES_PASSWORD:-local_only_change_me}@postgres:5432/${POSTGRES_DB:-supply_chain}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in the root .env file}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-supply_chain}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}@postgres:5432/${POSTGRES_DB:-supply_chain}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
@@ -65,4 +65,3 @@ services:
 volumes:
   postgres_data:
   redis_data:
-

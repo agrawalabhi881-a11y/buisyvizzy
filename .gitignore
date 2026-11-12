@@ -7,6 +7,12 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.db
+*.sqlite
+*.sqlite3
 
 # Environment variables
 .env
@@ -45,5 +51,6 @@ mlruns/
 models/*.pkl
 models/*.joblib
 
+# Test and coverage artifacts
 .phase3-pytest-tmp/
-
+.pytest-tmp/

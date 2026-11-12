@@ -3,6 +3,26 @@ import sys
 import pytest
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session
+from fastapi.testclient import TestClient
+from app.main import app
+
+
+@pytest.fixture
+def admin_headers():
+    """Log in as the demo admin and return authenticated request headers."""
+    with TestClient(app) as test_client:
+        response = test_client.post(
+            "/api/auth/login",
+            json={
+                "username": "admin",
+                "password": "adminpassword",
+            },
+        )
+
+    assert response.status_code == 200, response.text
+    token = response.json()["access_token"]
+
+    return {"Authorization": f"Bearer {token}"}
 
 # Ensure both backend root and repo root are in sys.path
 backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
