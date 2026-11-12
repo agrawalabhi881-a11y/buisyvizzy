@@ -93,9 +93,9 @@ From the repository root, copy the example file and replace its two generated-se
 Copy-Item .env.example .env
 $env:POSTGRES_PASSWORD = python -c "import secrets; print(secrets.token_urlsafe(24))"
 $env:JWT_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(48))"
-(Get-Content .env) -replace '^POSTGRES_PASSWORD=.*$', "POSTGRES_PASSWORD=$env:POSTGRES_PASSWORD" | Set-Content .env
-(Get-Content .env) -replace '^JWT_SECRET_KEY=.*$', "JWT_SECRET_KEY=$env:JWT_SECRET_KEY" | Set-Content .env
-(Get-Content .env) -replace 'replace-with-generated-url-safe-password', $env:POSTGRES_PASSWORD | Set-Content .env
+(Get-Content .env) -replace '^POSTGRES_PASSWORD=.*$', "POSTGRES_PASSWORD=$env:POSTGRES_PASSWORD" | Set-Content -Encoding ascii .env
+(Get-Content .env) -replace '^JWT_SECRET_KEY=.*$', "JWT_SECRET_KEY=$env:JWT_SECRET_KEY" | Set-Content -Encoding ascii .env
+(Get-Content .env) -replace 'replace-with-generated-url-safe-password', $env:POSTGRES_PASSWORD | Set-Content -Encoding ascii .env
 ```
 
 The root `.env` is ignored by Git. Do not commit it. For a standalone backend run, you can instead copy `backend/.env.example` to `backend/.env` and set a unique JWT secret.

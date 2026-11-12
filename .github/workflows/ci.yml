@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql+psycopg://supply_chain:supply_chain_ci@localhost:5432/supply_chain
-      JWT_SECRET_KEY: ci-only-secret-key-not-for-real-use-0123456789abcdef
+      JWT_SECRET_KEY: ci-only-jwt-signing-material-0123456789abcdef0123456789abcdef
       APP_ENV: test
     services:
       postgres:
@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       POSTGRES_PASSWORD: supply_chain_ci_password
-      JWT_SECRET_KEY: ci-only-secret-key-not-for-real-use-0123456789abcdef
+      JWT_SECRET_KEY: ci-only-jwt-signing-material-0123456789abcdef0123456789abcdef
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
