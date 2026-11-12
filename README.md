@@ -81,36 +81,68 @@ Switch personas instantly using the active role selector:
 ## 5. Getting Started & Running Locally
 
 ### Prerequisites
-- Python 3.11+ (Anaconda recommended)
-- Node.js 18+ (for local frontend dev) or Docker Desktop
+- Python 3.12+
+- Node.js 22+
+- Docker Desktop with Docker Compose v2
 
-### 1-Click Launchers (Windows)
-- **Start FastAPI Backend (with Swagger UI):** Double-click `run_api.bat` (or run `.\run_api.ps1`).  
-  Automatically launches Swagger documentation at `http://localhost:8000/docs`.
-- **Run Full Pytest Test Suite:** Double-click `run_tests.bat` (or run `.\run_tests.ps1`).  
-  Executes all 60 tests covering models, simulation engine, forecasting, optimizers, alerts, and failover.
-- **Run Console Simulation Demo:** Double-click `run_demo.bat`.
-- **Run Optimization Demo:** Double-click `run_optimization_demo.bat`.
+### Configure the environment
 
-### Running with Docker Compose
+From the repository root, copy the example file and replace its two generated-secret placeholders:
+
+```powershell
+Copy-Item .env.example .env
+$env:POSTGRES_PASSWORD = python -c "import secrets; print(secrets.token_urlsafe(24))"
+$env:JWT_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(48))"
+(Get-Content .env) -replace '^POSTGRES_PASSWORD=.*$', "POSTGRES_PASSWORD=$env:POSTGRES_PASSWORD" | Set-Content .env
+(Get-Content .env) -replace '^JWT_SECRET_KEY=.*$', "JWT_SECRET_KEY=$env:JWT_SECRET_KEY" | Set-Content .env
+(Get-Content .env) -replace 'replace-with-generated-url-safe-password', $env:POSTGRES_PASSWORD | Set-Content .env
+```
+
+The root `.env` is ignored by Git. Do not commit it. For a standalone backend run, you can instead copy `backend/.env.example` to `backend/.env` and set a unique JWT secret.
+
+### Start the full stack
+
 ```bash
 docker compose up --build
 ```
+
 - **Frontend Web UI:** `http://localhost:3000` (Nginx with `/api/` reverse proxy)
 - **FastAPI Backend:** `http://localhost:8000`
 - **PostgreSQL 16:** `localhost:5432`
 - **Redis 7:** `localhost:6379`
 
-### Running Manually
-```bash
-# 1. Backend
-cd backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+Stop the stack with `docker compose down`. Persistent data remains in named volumes; `docker compose down -v` deletes those volumes.
 
-# 2. Frontend
-cd frontend
-npm install
+### Running manually
+
+```powershell
+# Backend (from the repository root)
+Copy-Item backend/.env.example backend/.env
+Set-Location backend
+python -m pip install -e ".[dev]"
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Frontend (in another terminal)
+Set-Location frontend
+npm ci
 npm run dev
+```
+
+### Test and quality checks
+
+```powershell
+# Backend
+Set-Location backend
+ruff check .
+black --check .
+mypy app scripts
+pytest
+
+# Frontend
+Set-Location ../frontend
+npm ci
+npx tsc -b --pretty false
+npm run build
 ```
 
 ---
@@ -134,12 +166,10 @@ npm run dev
 | `POST` | `/api/recommendations/{id}/reject` | Explicitly declines a recommendation. |
 | `GET` | `/api/activity` | Returns audit trail of simulation events, disruptions, and decisions. |
 | `GET` | `/api/forecasting/predict` | Computes LightGBM multi-step quantile predictions ($P_{10}, P_{50}, P_{90}$). |
-| `POST` | `/api/simulation/strategy-comparison` | Executes paired Monte Carlo experiments ($N=10$ seeds, CRN) with Student's t-test ($p < 0.05$). |
-| `GET` | `/api/simulation/scenarios/catalog` | Returns the 5 standardized benchmark disruption scenarios. |
+| `POST` | `/api/simulation/strategy-comparison` | Executes paired Monte Carlo experiments ($N=10$ seeds, CRN) with Student's t-test ($p < 0.001$) and 95% confidence intervals. |
 
 ---
 
-## 7. Verification & Test Suite Status
+## 7. License
 
-- **Total Test Cases:** 60 Passed, 2 Skipped (Postgres container integration), 0 Failures.
-- **Coverage:** Contracts serialization, M5 schema & ingestion, database relationships, SimPy discrete-event tick loop, LightGBM quantile regression & pinball loss, OR-Tools MILP rebalancing, Clarke-Wright VRP, dynamic truck breakdown failover, alerts lifecycle, and paired Monte Carlo significance.
+This project is an academic and demonstration project. Review third-party dependency licenses before redistribution.
